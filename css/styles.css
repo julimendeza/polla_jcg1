@@ -1,0 +1,63 @@
+/* ── Reset & base ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  transition: background .4s, color .4s;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Tema Noche (azul) ────────────────────────────────────────────── */
+body[data-theme="noche"] {
+  background: #070f1e;
+  color: rgba(240,250,255,.9);
+}
+
+/* ── Tema Pasión (naranja) ────────────────────────────────────────── */
+body[data-theme="pasion"] {
+  background: #0c0500;
+  color: rgba(255,240,225,.9);
+}
+
+/* ── Tipografía ───────────────────────────────────────────────────── */
+.bb { font-family: 'Bebas Neue', sans-serif; letter-spacing: .04em; }
+
+/* ── Animación de entrada ─────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade { animation: fadeIn .25s ease forwards; }
+
+/* ── Inputs numéricos: ocultar flechas ───────────────────────────── */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
+/* ── Scrollbar personalizada ─────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+body[data-theme="noche"] ::-webkit-scrollbar-thumb  { background: rgba(56,189,248,.25); border-radius: 99px; }
+body[data-theme="pasion"] ::-webkit-scrollbar-thumb { background: rgba(249,115,22,.25); border-radius: 99px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ── Inputs globales ─────────────────────────────────────────────── */
+input, select, textarea {
+  font-family: 'DM Sans', sans-serif;
+}
+
+body[data-theme="noche"] input:focus,
+body[data-theme="noche"] select:focus {
+  border-color: rgba(56,189,248,.6) !important;
+  box-shadow: 0 0 0 3px rgba(56,189,248,.12);
+}
+body[data-theme="pasion"] input:focus,
+body[data-theme="pasion"] select:focus {
+  border-color: rgba(249,115,22,.6) !important;
+  box-shadow: 0 0 0 3px rgba(249,115,22,.12);
+}
+
+/* ── Responsive nav labels ──────────────────────────────────────── */
+@media (max-width: 480px) {
+  .nav-full { display: none; }
+}
