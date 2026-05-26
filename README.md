@@ -42,71 +42,26 @@ polla-jcg1/
 
 ## Paso 1 — Publicar en GitHub Pages
 
-### 1.1 Subir los archivos al repositorio
 
-1. Ve a [github.com/julimendeza/polla_jcg1](https://github.com/julimendeza/polla_jcg1)
-2. Sube todos los archivos del zip manteniendo la estructura de carpetas:
-   - Puedes arrastrar y soltar la carpeta completa en la interfaz web de GitHub
-   - O usar Git desde la terminal: `git add . && git commit -m "initial" && git push`
-
-### 1.2 Activar GitHub Pages
-
-1. En el repositorio, ve a **Settings** (pestaña superior)
-2. En el menú izquierdo, haz clic en **Pages**
-3. En **Source**, selecciona **Deploy from a branch**
-4. En **Branch**, selecciona `main` y la carpeta `/ (root)`
-5. Haz clic en **Save**
-
-Después de ~2 minutos, la app estará disponible en:
+La app estará disponible en:
 ```
 https://julimendeza.github.io/polla_jcg1
 ```
 
-> GitHub Pages puede tardar hasta 5 minutos la primera vez. Si ves error 404, espera un poco y recarga.
 
----
 
 ## Paso 2 — Configurar Firebase
 
-### 2.1 Crear la base de datos
+### 2.Crear la base de datos
+{Secret}
 
-1. Ve a [console.firebase.google.com](https://console.firebase.google.com)
-2. Abre el proyecto **polla-jcg1**
-3. En el menú izquierdo: **Compilación → Realtime Database**
-4. Haz clic en **Crear base de datos**
-5. Elige una región (cualquiera está bien) → selecciona **Iniciar en modo de prueba** → **Siguiente**
-
-La URL ya está configurada en el código:
-```
-https://polla-jcg1-default-rtdb.firebaseio.com
-```
-
-### 2.2 Configurar las reglas de seguridad
-
-1. En la base de datos, haz clic en la pestaña **Reglas**
-2. Reemplaza todo el contenido con esto:
-
-```json
-{
-  "rules": {
-    ".read": true,
-    ".write": true
-  }
-}
-```
-
-3. Haz clic en **Publicar**
-
-> **¿Por qué reglas abiertas?** Esta app no usa autenticación de Firebase — la seguridad está en la contraseña del admin y el sistema de PINs. Para un grupo cerrado de 40 personas con un enlace privado, esto es suficiente.
-
----
 
 ## Paso 3 — Configuración inicial del admin
 
 1. Abre la app en el navegador
-2. Haz clic en **Admin** → ingresa la contraseña por defecto: `admin2026!`
+2. Haz clic en **Admin** → ingresa la contraseña por defecto (compartida con JCG)
 3. Ve a **⚙️ Ajustes** y actualiza:
-   - **Cuota por participante** (por defecto: 20,000)
+   - **Cuota por participante** (por defecto: 20.000)
    - **Moneda** (por defecto: COP)
    - **Contraseña admin** — ¡cámbiala antes de compartir el link!
 4. Guarda los ajustes
