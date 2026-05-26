@@ -142,7 +142,7 @@ var DEF = {
   adminPw:   "admin2026!",
   entryFee:  20000,
   currency:  "COP",
-  firebase:  "", // ← Ingresar URL de Firebase Realtime DB aquí o en el panel Admin
+  firebase:  "https://polla-jcg1-default-rtdb.firebaseio.com",
 
   scoring: {
     result: 1,   // 1 pt por resultado correcto (G/E/P)
