@@ -7,12 +7,12 @@ function HomeView(p) {
   var setView      = p.setView;
 
   var started = hasStarted();
-  var human = participants.filter(function(x){ return x.id !== "_bot"; });
+  var human = participants.filter(function(x){ return x && x.id !== "_bot"; });
 
   // Clasificación rápida
   var ranked = useMemo(function(){
     return participants
-      .filter(function(x){ return x.id !== "_bot"; })
+      .filter(function(x){ return x && x.id !== "_bot"; })
       .map(function(x){
         return Object.assign({}, x, calcScore(x.preds || {}, results, settings.scoring));
       })

@@ -56,7 +56,7 @@ function AdminView(p) {
 
   async function handleDeleteParticipant(id) {
     if (!window.confirm(T.delConfirm)) return;
-    await saveParticipants(participants.filter(function(x){ return x.id !== id; }));
+    await saveParticipants(participants.filter(function(x){ return x && x.id !== id; }));
   }
 
   async function handleAddPin() {

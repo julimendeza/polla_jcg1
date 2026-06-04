@@ -8,7 +8,7 @@ function LeaderboardView(p) {
   var started = hasStarted();
   var expSt = useState(null); var exp = expSt[0], setExp = expSt[1];
 
-  var human = participants.filter(function(x){ return x.id !== "_bot"; });
+  var human = participants.filter(function(x){ return x && x.id !== "_bot"; });
 
   var ranked = useMemo(function(){
     return human
