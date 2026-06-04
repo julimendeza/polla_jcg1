@@ -152,9 +152,6 @@ function LeaderboardView(p) {
       marginTop:16,display:"flex",gap:16,flexWrap:"wrap",
       justifyContent:"center",fontSize:11,color:thm.inv(.4)
     }}>
-      <span style=${{color:"#4ade80",fontWeight:700}}>⭐ Marcador exacto (+4 pts)</span>
-      <span style=${{color:thm.accent,fontWeight:700}}>✓ Resultado correcto (+1 pt)</span>
-      <span style=${{color:"#f87171",fontWeight:700}}>✗ Incorrecto (0 pts)</span>
-    </div>
+     </div>
   </div>`;
 }
