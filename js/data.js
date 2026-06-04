@@ -3,7 +3,6 @@
 // El cierre de predicciones es automático al llegar la hora de kickoff.
 var MATCHES = [
   // ── PARTIDO DE PRUEBA — borrar antes del torneo ───────────────────
-  { id:"test", num:0, phase:"Grupos", home:"Colombia", away:"New Zealand", kickoff:"2026-06-04T04:00:00Z" },
   { id:"m01", num:1,  phase:"Grupos", home:"Mexico",       away:"South Africa",  kickoff:"2026-06-12T23:00:00Z" },
   { id:"m02", num:2,  phase:"Grupos", home:"USA",           away:"Paraguay",      kickoff:"2026-06-12T22:00:00Z" },
   { id:"m03", num:3,  phase:"Grupos", home:"Brazil",        away:"Morocco",       kickoff:"2026-06-14T02:00:00Z" },
