@@ -147,11 +147,5 @@ function LeaderboardView(p) {
       })}
     </${Card}>
 
-    <!-- Leyenda de puntos -->
-    <div style=${{
-      marginTop:16,display:"flex",gap:16,flexWrap:"wrap",
-      justifyContent:"center",fontSize:11,color:thm.inv(.4)
-    }}>
-     </div>
   </div>`;
 }

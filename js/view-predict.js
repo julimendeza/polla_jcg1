@@ -66,9 +66,9 @@ function PredictView(p) {
         })
       : participants.concat([{ id: pinId, name: name, pin: pinCode.trim().toUpperCase(), preds: preds }]);
     await saveP(upd);
-    // Marcar PIN como usado si es primera vez
     if (!existId) {
       await pins.markUsed(pinCode.trim().toUpperCase(), name);
+      setExistId(pinId); // ← evita duplicado si el usuario edita y guarda de nuevo
     }
     setSaving(false);
     setStep(2);
