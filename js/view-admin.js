@@ -371,16 +371,6 @@ function AdminView(p) {
     <!-- ── TAB: Ajustes ── -->
     ${tab === "settings" && html`<div>
       <${Card}>
-        <${Field} label=${T.entryFee + " (" + (locSettings.currency||"COP") + ")"}>
-          <input type="number" value=${locSettings.entryFee||""}
-            onInput=${function(e){setLocSettings(function(s){return Object.assign({},s,{entryFee:+e.target.value});});}}
-            style=${inputStyle}/>
-        </${Field}>
-        <${Field} label=${T.currency}>
-          <input type="text" value=${locSettings.currency||""}
-            onInput=${function(e){setLocSettings(function(s){return Object.assign({},s,{currency:e.target.value});});}}
-            style=${inputStyle}/>
-        </${Field}>
         <${Field} label=${T.adminPw}>
           <input type="text" value=${locSettings.adminPw||""}
             onInput=${function(e){setLocSettings(function(s){return Object.assign({},s,{adminPw:e.target.value});});}}

@@ -77,7 +77,7 @@ function teamName(t) { return TEAM_ES[t] || t; }
 
 // ── Textos de la aplicación (español) ───────────────────────────────
 var T = {
-  title:       "POLLA JCG 2026",
+  title:       "POLLA MUNDIALISTA",
   sub:         "Predice los marcadores · Copa del Mundo 2026",
   predict:     "Predecir",
   table:       "🏅 Tabla",
@@ -96,8 +96,11 @@ var T = {
 
   noPart:      "Sin participantes aún",
   adminPw:     "Contraseña admin",
-  entryFee:    "Cuota por participante",
-  currency:    "Moneda",
+  salsamentaria: "Salsamentaria JCG",
+  salsaSub:    "Concurso exclusivo para clientes de la Salsamentaria JCG",
+  prize1:      "🥇 1er puesto — Bono $150.000",
+  prize2:      "🥈 2do puesto — Bono $100.000",
+  prize3:      "🥉 3er puesto — Bono $50.000",
   scoringTitle:"Sistema de Puntos",
   delConfirm:  "¿Eliminar participante?",
   saveBtn:     "Guardar",
@@ -140,8 +143,6 @@ var T = {
 // ── Configuración por defecto ────────────────────────────────────────
 var DEF = {
   adminPw:   "admin2026!",
-  entryFee:  20000,
-  currency:  "COP",
   firebase:  "https://polla-jcg1-default-rtdb.firebaseio.com",
 
   scoring: {

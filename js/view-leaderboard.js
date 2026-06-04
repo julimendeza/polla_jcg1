@@ -9,8 +9,6 @@ function LeaderboardView(p) {
   var expSt = useState(null); var exp = expSt[0], setExp = expSt[1];
 
   var human = participants.filter(function(x){ return x.id !== "_bot"; });
-  var total  = human.length * (settings.entryFee || DEF.entryFee);
-  var currency = settings.currency || DEF.currency;
 
   var ranked = useMemo(function(){
     return human
@@ -50,14 +48,27 @@ function LeaderboardView(p) {
   return html`<div class="fade" style=${{maxWidth:680,margin:"0 auto",padding:"28px 16px 60px"}}>
 
     <!-- Encabezado -->
-    <div style=${{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
+    <div style=${{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
       <span style=${{fontSize:36}}>🏅</span>
       <div>
         <h2 class="bb" style=${{fontSize:30,color:thm.accent}}>${T.leaderTitle}</h2>
-        <p style=${{color:thm.inv(.4),fontSize:13}}>
-          ${ranked.length} participantes · ${currency} ${total.toLocaleString("es-CO")}
-        </p>
+        <p style=${{color:thm.inv(.4),fontSize:13}}>${ranked.length} participantes</p>
       </div>
+    </div>
+
+    <!-- Premios -->
+    <div style=${{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+      ${[
+        {label:T.prize1, bg:thm.a(.12), color:thm.accent},
+        {label:T.prize2, bg:thm.inv(.06), color:thm.inv(.65)},
+        {label:T.prize3, bg:thm.inv(.04), color:thm.inv(.45)}
+      ].map(function(pr,i){
+        return html`<div key=${i} style=${{
+          flex:1, minWidth:130, padding:"9px 12px", borderRadius:10,
+          background:pr.bg, fontWeight:700, fontSize:12, color:pr.color,
+          textAlign:"center", lineHeight:1.4
+        }}>${pr.label}</div>`;
+      })}
     </div>
 
     <!-- Progreso de resultados -->

@@ -8,7 +8,6 @@ function HomeView(p) {
 
   var started = hasStarted();
   var human = participants.filter(function(x){ return x.id !== "_bot"; });
-  var total  = human.length * (settings.entryFee || DEF.entryFee);
 
   // Clasificación rápida
   var ranked = useMemo(function(){
@@ -79,6 +78,39 @@ function HomeView(p) {
       }} key=${thm.id}>${T.title}</h1>
       <p style=${{color:thm.inv(.4),fontSize:13}}>${T.sub}</p>
     </div>
+
+    <!-- Banner Salsamentaria -->
+    <div style=${{
+      marginBottom:20, padding:"14px 18px", borderRadius:14,
+      background:thm.a(.08), border:thm.bdra(1,.25),
+      textAlign:"center"
+    }}>
+      <div style=${{fontSize:11,fontWeight:700,color:thm.accent,letterSpacing:".1em",textTransform:"uppercase",marginBottom:4}}>
+        🏪 ${T.salsamentaria}
+      </div>
+      <p style=${{fontSize:12,color:thm.inv(.55),lineHeight:1.6}}>${T.salsaSub}</p>
+    </div>
+
+    <!-- Premios -->
+    <${Card} sx=${{marginBottom:20,padding:"16px 18px"}}>
+      <div style=${{
+        fontSize:11,fontWeight:700,color:thm.inv(.35),
+        letterSpacing:".08em",marginBottom:12,textTransform:"uppercase"
+      }}>🏆 Premios</div>
+      <div style=${{display:"flex",flexDirection:"column",gap:8}}>
+        ${[
+          {label:T.prize1, bg:thm.a(.12), color:thm.accent},
+          {label:T.prize2, bg:thm.inv(.06), color:thm.inv(.7)},
+          {label:T.prize3, bg:thm.inv(.04), color:thm.inv(.55)}
+        ].map(function(pr, i){
+          return html`<div key=${i} style=${{
+            padding:"10px 14px", borderRadius:10,
+            background:pr.bg, fontWeight:700,
+            fontSize:14, color:pr.color
+          }}>${pr.label}</div>`;
+        })}
+      </div>
+    </${Card}>
 
     <!-- Stats rápidas -->
     <div style=${{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:20}}>
