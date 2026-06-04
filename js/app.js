@@ -37,7 +37,7 @@ function App() {
           db.get("jcg_p"),
           db.get("jcg_r")
         ]);
-        if (loaded[0]) setParts(loaded[0]);
+        if (loaded[0]) { var rawP = loaded[0]; setParts(Array.isArray(rawP) ? rawP : Object.values(rawP).filter(Boolean)); }
         if (loaded[1]) setResults(loaded[1]);
       } catch(e) {
         console.error("Init error:", e);
