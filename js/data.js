@@ -97,8 +97,8 @@ var T = {
 
   noPart:      "Sin participantes aún",
   adminPw:     "Contraseña admin",
-  salsamentaria: "Salsamentaria JCG",
-  salsaSub:    "Concurso exclusivo para clientes de la Salsamentaria JCG",
+  salsamentaria: "Salsamentaria Juanchito",
+  salsaSub:    "Concurso exclusivo para clientes de la Salsamentaria Juanchito",
   prize1:      "🥇 1er puesto — Bono $150.000",
   prize2:      "🥈 2do puesto — Bono $100.000",
   prize3:      "🥉 3er puesto — Bono $50.000",
