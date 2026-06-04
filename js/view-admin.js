@@ -20,6 +20,8 @@ function AdminView(p) {
   var newPinSt  = useState(""); var newPin = newPinSt[0], setNewPin = newPinSt[1];
   var newPinNameSt = useState(""); var newPinName = newPinNameSt[0], setNewPinName = newPinNameSt[1];
   var bulkSt   = useState(false); var showBulk = bulkSt[0], setShowBulk = bulkSt[1];
+  var editIdSt = useState(null); var editingId = editIdSt[0], setEditingId = editIdSt[1];
+  var editNameSt = useState(""); var editingName = editNameSt[0], setEditingName = editNameSt[1];
 
   useEffect(function(){ setLocResults(Object.assign({}, results)); }, [results]);
   useEffect(function(){ setLocSettings(Object.assign({}, DEF, settings)); }, [settings]);
@@ -57,6 +59,17 @@ function AdminView(p) {
   async function handleDeleteParticipant(id) {
     if (!window.confirm(T.delConfirm)) return;
     await saveParticipants(participants.filter(function(x){ return x && x.id !== id; }));
+  }
+
+  async function handleRename(id) {
+    var trimmed = editingName.trim();
+    if (!trimmed) return;
+    var updated = participants.map(function(x){
+      return x && x.id === id ? Object.assign({}, x, { name: trimmed }) : x;
+    });
+    await saveParticipants(updated);
+    setEditingId(null);
+    flash();
   }
 
   async function handleAddPin() {
@@ -224,29 +237,63 @@ function AdminView(p) {
             return pr && pr.h !== "" && pr.h !== undefined;
           }).length;
           return html`<div key=${par.id} style=${{
-            display:"flex", alignItems:"center", gap:12,
-            padding:"12px 14px", borderRadius:12, marginBottom:8,
-            background:thm.inv(.03), border:thm.bdr(1,.07)
+            borderRadius:12, marginBottom:8,
+            background:thm.inv(.03), border: editingId===par.id ? thm.bdra(1,.3) : thm.bdr(1,.07),
+            overflow:"hidden"
           }}>
-            <div style=${{
-              width:36, height:36, borderRadius:10, flexShrink:0,
-              background:thm.a(.15), color:thm.accent,
-              display:"flex", alignItems:"center", justifyContent:"center",
-              fontFamily:"'Bebas Neue',sans-serif", fontSize:14, letterSpacing:1
-            }}>${par.pin || "?"}</div>
-            <div style=${{flex:1}}>
-              <div style=${{fontWeight:600,fontSize:14,color:thm.inv(.9)}}>${par.name}</div>
-              <div style=${{fontSize:10,color:thm.inv(.3),marginTop:2}}>
-                ${predCount}/${MATCHES.length} predicciones
+            <!-- Fila principal -->
+            <div style=${{display:"flex", alignItems:"center", gap:12, padding:"12px 14px"}}>
+              <div style=${{
+                width:36, height:36, borderRadius:10, flexShrink:0,
+                background:thm.a(.15), color:thm.accent,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontFamily:"'Bebas Neue',sans-serif", fontSize:14, letterSpacing:1
+              }}>${par.pin || "?"}</div>
+              <div style=${{flex:1}}>
+                <div style=${{fontWeight:600,fontSize:14,color:thm.inv(.9)}}>${par.name}</div>
+                <div style=${{fontSize:10,color:thm.inv(.3),marginTop:2}}>
+                  ${predCount}/${MATCHES.length} predicciones
+                </div>
               </div>
+              <div style=${{textAlign:"right"}}>
+                <div class="bb" style=${{fontSize:20,color:thm.accent}}>${sc.pts}</div>
+                <div style=${{fontSize:10,color:thm.inv(.3)}}>pts</div>
+              </div>
+              <${Btn} v="secondary"
+                onClick=${function(){
+                  setEditingId(editingId===par.id ? null : par.id);
+                  setEditingName(par.name);
+                }}
+                sx=${{padding:"6px 10px",fontSize:11}}>✏️</${Btn}>
+              <${Btn} v="danger"
+                onClick=${function(){ handleDeleteParticipant(par.id); }}
+                sx=${{padding:"6px 10px",fontSize:11}}>🗑</${Btn}>
             </div>
-            <div style=${{textAlign:"right"}}>
-              <div class="bb" style=${{fontSize:20,color:thm.accent}}>${sc.pts}</div>
-              <div style=${{fontSize:10,color:thm.inv(.3)}}>pts</div>
-            </div>
-            <${Btn} v="danger"
-              onClick=${function(){ handleDeleteParticipant(par.id); }}
-              sx=${{padding:"6px 10px",fontSize:11}}>🗑</${Btn}>
+            <!-- Panel de edición inline -->
+            ${editingId === par.id && html`<div style=${{
+              padding:"10px 14px 14px", borderTop:thm.bdr(1,.08),
+              background:thm.a(.04), display:"flex", gap:8, alignItems:"center"
+            }}>
+              <input
+                type="text"
+                value=${editingName}
+                onInput=${function(e){ setEditingName(e.target.value); }}
+                onKeyDown=${function(e){
+                  if (e.key==="Enter") handleRename(par.id);
+                  if (e.key==="Escape") setEditingId(null);
+                }}
+                style=${{
+                  flex:1, padding:"7px 10px", borderRadius:8,
+                  fontFamily:"'DM Sans',sans-serif", fontSize:13,
+                  background:thm.inv(.07), border:thm.bdra(1,.4),
+                  color:thm.inv(.9), outline:"none"
+                }}
+              />
+              <${Btn} onClick=${function(){ handleRename(par.id); }}
+                sx=${{padding:"7px 14px",fontSize:12}}>Guardar</${Btn}>
+              <${Btn} v="ghost" onClick=${function(){ setEditingId(null); }}
+                sx=${{padding:"7px 10px",fontSize:12}}>✕</${Btn}>
+            </div>`}
           </div>`;
         })
       }
