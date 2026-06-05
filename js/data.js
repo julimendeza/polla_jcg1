@@ -1,27 +1,28 @@
 // ── 17 Partidos seleccionados ────────────────────────────────────────
-// ⚠️ VERIFICAR fechas/horas antes del torneo — los kickoffs son aproximados (UTC)
-// El cierre de predicciones es automático al llegar la hora de kickoff.
+// Kickoffs verificados con ESPN/CBS/Fox Sports (fuente: junio 2026)
+// Hora Colombia = UTC-5. Para convertir: resta 5h al tiempo UTC.
 var MATCHES = [
-  // ── PARTIDO DE PRUEBA — borrar antes del torneo ───────────────────
-  { id:"m01", num:1,  phase:"Grupos", home:"Mexico",       away:"South Africa",  kickoff:"2026-06-12T23:00:00Z" },
-  { id:"m02", num:2,  phase:"Grupos", home:"USA",           away:"Paraguay",      kickoff:"2026-06-12T22:00:00Z" },
-  { id:"m03", num:3,  phase:"Grupos", home:"Brazil",        away:"Morocco",       kickoff:"2026-06-14T02:00:00Z" },
-  { id:"m04", num:4,  phase:"Grupos", home:"Netherlands",   away:"Japan",         kickoff:"2026-06-14T20:00:00Z" },
-  { id:"m05", num:5,  phase:"Grupos", home:"Belgium",       away:"Egypt",         kickoff:"2026-06-14T23:00:00Z" },
-  { id:"m06", num:6,  phase:"Grupos", home:"Argentina",     away:"Algeria",       kickoff:"2026-06-15T23:00:00Z" },
-  { id:"m07", num:7,  phase:"Grupos", home:"Uzbekistan",    away:"Colombia",      kickoff:"2026-06-15T19:00:00Z" },
-  { id:"m10", num:10, phase:"Grupos", home:"Germany",       away:"Ivory Coast",   kickoff:"2026-06-14T19:00:00Z" },
-  { id:"m11", num:11, phase:"Grupos", home:"Spain",         away:"Saudi Arabia",  kickoff:"2026-06-14T02:00:00Z" },
-  { id:"m12", num:12, phase:"Grupos", home:"France",        away:"Iraq",          kickoff:"2026-06-14T23:00:00Z" },
-  // ── Fase de Grupos — Jornada 2 ───────────────────────────────────
-  { id:"m08", num:8,  phase:"Grupos", home:"Mexico",        away:"South Korea",   kickoff:"2026-06-20T00:00:00Z" },
-  { id:"m09", num:9,  phase:"Grupos", home:"Turkey",        away:"Paraguay",      kickoff:"2026-06-20T20:00:00Z" },
-  { id:"m13", num:13, phase:"Grupos", home:"Colombia",      away:"DR Congo",      kickoff:"2026-06-21T23:00:00Z" },
-  { id:"m14", num:14, phase:"Grupos", home:"Scotland",      away:"Brazil",        kickoff:"2026-06-20T19:00:00Z" },
-  { id:"m15", num:15, phase:"Grupos", home:"Ecuador",       away:"Germany",       kickoff:"2026-06-21T16:00:00Z" },
-  { id:"m16", num:16, phase:"Grupos", home:"Uruguay",       away:"Spain",         kickoff:"2026-06-20T03:00:00Z" },
-  // ── Fase de Grupos — Jornada 3 ───────────────────────────────────
-  { id:"m17", num:17, phase:"Grupos", home:"Colombia",      away:"Portugal",      kickoff:"2026-06-26T23:00:00Z" },
+  // ── Jornada 1 (Jun 11–17) ────────────────────────────────────────
+  { id:"m01", num:1,  phase:"Grupos", home:"Mexico",       away:"South Africa",  kickoff:"2026-06-11T19:00:00Z" }, // jue 11 jun · 14:00 COL
+  { id:"m02", num:2,  phase:"Grupos", home:"USA",           away:"Paraguay",      kickoff:"2026-06-13T01:00:00Z" }, // vie 12 jun · 20:00 COL
+  { id:"m03", num:3,  phase:"Grupos", home:"Brazil",        away:"Morocco",       kickoff:"2026-06-13T22:00:00Z" }, // sáb 13 jun · 17:00 COL
+  { id:"m04", num:4,  phase:"Grupos", home:"Netherlands",   away:"Japan",         kickoff:"2026-06-14T20:00:00Z" }, // dom 14 jun · 15:00 COL ✅
+  { id:"m05", num:5,  phase:"Grupos", home:"Belgium",       away:"Egypt",         kickoff:"2026-06-15T22:00:00Z" }, // lun 15 jun · 17:00 COL
+  { id:"m06", num:6,  phase:"Grupos", home:"Argentina",     away:"Algeria",       kickoff:"2026-06-17T01:00:00Z" }, // mar 16 jun · 20:00 COL
+  { id:"m07", num:7,  phase:"Grupos", home:"Uzbekistan",    away:"Colombia",      kickoff:"2026-06-18T02:00:00Z" }, // mié 17 jun · 21:00 COL
+  { id:"m10", num:10, phase:"Grupos", home:"Germany",       away:"Ivory Coast",   kickoff:"2026-06-20T20:00:00Z" }, // sáb 20 jun · 15:00 COL
+  { id:"m11", num:11, phase:"Grupos", home:"Spain",         away:"Saudi Arabia",  kickoff:"2026-06-21T16:00:00Z" }, // dom 21 jun · 11:00 COL
+  { id:"m12", num:12, phase:"Grupos", home:"France",        away:"Iraq",          kickoff:"2026-06-22T21:00:00Z" }, // lun 22 jun · 16:00 COL
+  // ── Jornada 2 (Jun 18–23) ────────────────────────────────────────
+  { id:"m08", num:8,  phase:"Grupos", home:"Mexico",        away:"South Korea",   kickoff:"2026-06-19T01:00:00Z" }, // jue 18 jun · 20:00 COL
+  { id:"m09", num:9,  phase:"Grupos", home:"Turkey",        away:"Paraguay",      kickoff:"2026-06-20T04:00:00Z" }, // vie 19 jun · 23:00 COL
+  { id:"m13", num:13, phase:"Grupos", home:"Colombia",      away:"DR Congo",      kickoff:"2026-06-24T02:00:00Z" }, // mar 23 jun · 21:00 COL
+  { id:"m14", num:14, phase:"Grupos", home:"Scotland",      away:"Brazil",        kickoff:"2026-06-24T22:00:00Z" }, // mié 24 jun · 17:00 COL
+  { id:"m15", num:15, phase:"Grupos", home:"Ecuador",       away:"Germany",       kickoff:"2026-06-25T20:00:00Z" }, // jue 25 jun · 15:00 COL
+  { id:"m16", num:16, phase:"Grupos", home:"Uruguay",       away:"Spain",         kickoff:"2026-06-27T00:00:00Z" }, // vie 26 jun · 19:00 COL
+  // ── Jornada 3 (Jun 24–27) ────────────────────────────────────────
+  { id:"m17", num:17, phase:"Grupos", home:"Colombia",      away:"Portugal",      kickoff:"2026-06-27T23:30:00Z" }, // sáb 27 jun · 18:30 COL
+
 ];
 
 // ── ISO codes para banderas ──────────────────────────────────────────
