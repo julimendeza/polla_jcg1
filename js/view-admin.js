@@ -94,6 +94,144 @@ function AdminView(p) {
     setPinList(updated);
   }
 
+  // ── Descargas ─────────────────────────────────────────────────────
+
+  function sa(str) {
+    // Quita acentos para PDF (jsPDF no soporta UTF-8 extendido bien)
+    return String(str || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function downloadJSON() {
+    var data = {
+      exportado: new Date().toISOString(),
+      participantes: participants.filter(function(x){ return x && x.id; }),
+      resultados: results,
+      partidos: MATCHES.map(function(m){
+        return { id:m.id, num:m.num, local:teamName(m.home), visitante:teamName(m.away), kickoff:m.kickoff };
+      })
+    };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'polla-mundialista-' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  }
+
+  function downloadPDF() {
+    var jsPDF = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDF) { alert('jsPDF no disponible'); return; }
+    var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    var human = participants.filter(function(x){ return x && x.id; });
+
+    human.forEach(function(par, idx) {
+      if (idx > 0) doc.addPage();
+      var sc = calcScore(par.preds || {}, results, settings.scoring || DEF.scoring);
+
+      doc.setFontSize(15); doc.setFont('helvetica','bold');
+      doc.text('POLLA MUNDIALISTA 2026', 105, 17, { align:'center' });
+      doc.setFontSize(12);
+      doc.text(sa(par.name), 105, 25, { align:'center' });
+      doc.setFontSize(8); doc.setFont('helvetica','normal');
+      doc.text('PIN: ' + (par.pin||'—') + '   |   Total: ' + sc.pts + ' pts', 105, 31, { align:'center' });
+
+      var body = MATCHES.map(function(m) {
+        var pred = par.preds && par.preds[m.id];
+        var res  = results && results[m.id];
+        var s    = sc.detail && sc.detail[m.id];
+        var hasPred = pred && pred.h !== undefined && pred.h !== '';
+        var hasRes  = res  && res.h  !== undefined && res.h  !== '';
+        return [
+          m.num,
+          sa(teamName(m.home)),
+          sa(teamName(m.away)),
+          hasPred ? pred.h + '-' + pred.a : '—',
+          hasRes  ? res.h  + '-' + res.a  : '—',
+          s ? s.pts : 0
+        ];
+      });
+      body.push(['','','','','TOTAL', sc.pts]);
+
+      doc.autoTable({
+        head: [['#','Local','Visitante','Pred.','Result.','Pts']],
+        body: body,
+        startY: 36,
+        styles: { fontSize:8, cellPadding:1.8 },
+        headStyles: { fillColor:[20,50,90], textColor:255, fontStyle:'bold' },
+        columnStyles: {
+          0: { cellWidth:8,  halign:'center' },
+          3: { cellWidth:18, halign:'center' },
+          4: { cellWidth:18, halign:'center' },
+          5: { cellWidth:10, halign:'center' }
+        },
+        didParseCell: function(d) {
+          if (d.row.index === MATCHES.length) {
+            d.cell.styles.fontStyle = 'bold';
+            d.cell.styles.fillColor = [230,230,230];
+          }
+        }
+      });
+    });
+
+    doc.save('polla-mundialista-predicciones.pdf');
+  }
+
+  function downloadXLSX() {
+    if (!window.XLSX) { alert('XLSX no disponible'); return; }
+    var wb = window.XLSX.utils.book_new();
+    var human = participants.filter(function(x){ return x && x.id; });
+
+    // Hoja resumen
+    var summaryRows = [['PIN','Nombre','Predicciones','Puntos']];
+    human.sort(function(a,b){
+      return calcScore(b.preds||{},results,settings.scoring).pts -
+             calcScore(a.preds||{},results,settings.scoring).pts;
+    }).forEach(function(par){
+      var sc = calcScore(par.preds||{}, results, settings.scoring||DEF.scoring);
+      var predCount = MATCHES.filter(function(m){
+        var p = par.preds && par.preds[m.id];
+        return p && p.h !== undefined && p.h !== '';
+      }).length;
+      summaryRows.push([par.pin||'—', par.name, predCount+'/'+MATCHES.length, sc.pts]);
+    });
+    var wsSummary = window.XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSummary['!cols'] = [{wch:6},{wch:28},{wch:14},{wch:8}];
+    window.XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
+
+    // Hoja por participante
+    human.forEach(function(par) {
+      var sc = calcScore(par.preds||{}, results, settings.scoring||DEF.scoring);
+      var rows = [['#','Local','Visitante','Prediccion','Resultado','Puntos','Estado']];
+      MATCHES.forEach(function(m) {
+        var pred = par.preds && par.preds[m.id];
+        var res  = results && results[m.id];
+        var s    = sc.detail && sc.detail[m.id];
+        var hasPred = pred && pred.h !== undefined && pred.h !== '';
+        var hasRes  = res  && res.h  !== undefined && res.h  !== '';
+        var estado = !hasPred ? 'Sin prediccion' :
+                     !hasRes  ? 'Pendiente' :
+                     s.status === 'exact'  ? 'Exacto (+4)' :
+                     s.status === 'result' ? 'Resultado (+1)' : 'Incorrecto (0)';
+        rows.push([
+          m.num,
+          teamName(m.home), teamName(m.away),
+          hasPred ? pred.h+'-'+pred.a : '-',
+          hasRes  ? res.h +'-'+res.a  : '-',
+          s ? s.pts : 0,
+          estado
+        ]);
+      });
+      rows.push(['','','','','TOTAL', sc.pts, '']);
+
+      var ws = window.XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{wch:4},{wch:22},{wch:22},{wch:10},{wch:10},{wch:7},{wch:16}];
+      var sheetName = par.name.replace(/[:\\\/\?\*\[\]]/g,'').slice(0,31) || par.pin;
+      window.XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+
+    window.XLSX.writeFile(wb, 'polla-mundialista-predicciones.xlsx');
+  }
+
   // Generar 40 PINs automáticamente (3 caracteres alfanuméricos)
   async function handleGenerate40() {
     if (!window.confirm("¿Generar 40 PINs aleatorios? Esto agrega 40 PINs vacíos (sin nombre) a la lista existente.")) return;
@@ -151,10 +289,11 @@ function AdminView(p) {
   </div>`;
 
   var tabs = [
-    {id:"results",  label:"✅ Resultados"},
-    {id:"parts",    label:"👥 Participantes"},
-    {id:"pins",     label:"🔑 PINs"},
-    {id:"settings", label:"⚙️ Ajustes"}
+    {id:"results",   label:"✅ Resultados"},
+    {id:"parts",     label:"👥 Participantes"},
+    {id:"pins",      label:"🔑 PINs"},
+    {id:"settings",  label:"⚙️ Ajustes"},
+    {id:"downloads", label:"📥 Descargas"}
   ];
 
   return html`<div class="fade" style=${{maxWidth:680,margin:"0 auto",padding:"28px 16px 60px"}}>
@@ -450,6 +589,67 @@ function AdminView(p) {
         <${Btn} onClick=${handleSaveSettings} full=${true} sx=${{marginTop:4,padding:"13px"}}>
           💾 Guardar ajustes
         </${Btn}>
+      </${Card}>
+    </div>`}
+
+    <!-- ── TAB: Descargas ── -->
+    ${tab === "downloads" && html`<div>
+      <p style=${{fontSize:12,color:thm.inv(.4),marginBottom:16}}>
+        ${participants.filter(function(x){return x&&x.id;}).length} participantes · datos actuales al momento de la descarga.
+      </p>
+
+      <!-- PDF -->
+      <${Card} sx=${{marginBottom:12}}>
+        <div style=${{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+          <span style=${{fontSize:32}}>📄</span>
+          <div style=${{flex:1,minWidth:160}}>
+            <div style=${{fontWeight:700,fontSize:14,color:thm.inv(.9),marginBottom:3}}>
+              PDF — Una página por participante
+            </div>
+            <div style=${{fontSize:12,color:thm.inv(.45)}}>
+              Tabla con predicciones, resultados y puntos. Ideal para imprimir.
+            </div>
+          </div>
+          <${Btn} onClick=${downloadPDF} sx=${{padding:"9px 16px",whiteSpace:"nowrap"}}>
+            Descargar PDF
+          </${Btn}>
+        </div>
+      </${Card}>
+
+      <!-- XLSX -->
+      <${Card} sx=${{marginBottom:12}}>
+        <div style=${{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+          <span style=${{fontSize:32}}>📊</span>
+          <div style=${{flex:1,minWidth:160}}>
+            <div style=${{fontWeight:700,fontSize:14,color:thm.inv(.9),marginBottom:3}}>
+              Excel — Hoja por participante + resumen
+            </div>
+            <div style=${{fontSize:12,color:thm.inv(.45)}}>
+              .xlsx con hoja de clasificación y una hoja por cada jugador.
+            </div>
+          </div>
+          <${Btn} v="secondary" onClick=${downloadXLSX} sx=${{padding:"9px 16px",whiteSpace:"nowrap"}}>
+            Descargar Excel
+          </${Btn}>
+        </div>
+      </${Card}>
+
+      <!-- JSON -->
+      <${Card}>
+        <div style=${{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+          <span style=${{fontSize:32}}>📋</span>
+          <div style=${{flex:1,minWidth:160}}>
+            <div style=${{fontWeight:700,fontSize:14,color:thm.inv(.9),marginBottom:3}}>
+              JSON — Exportar todos los datos
+            </div>
+            <div style=${{fontSize:12,color:thm.inv(.45)}}>
+              Participantes, predicciones y resultados. Sirve como respaldo.
+            </div>
+          </div>
+          <${Btn} v="secondary" onClick=${downloadJSON} sx=${{padding:"9px 16px",whiteSpace:"nowrap"}}>
+            Descargar JSON
+          </${Btn}>
+        </div>
       </${Card}>
     </div>`}
 
