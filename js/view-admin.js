@@ -119,117 +119,131 @@ function AdminView(p) {
   }
 
   function downloadPDF() {
-    var jsPDF = window.jspdf && window.jspdf.jsPDF;
-    if (!jsPDF) { alert('jsPDF no disponible'); return; }
-    var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    var jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    if (!jsPDF) { alert('jsPDF no cargado aun. Espera unos segundos y reintenta.'); return; }
     var human = participants.filter(function(x){ return x && x.id; });
+    if (!human.length) { alert('No hay participantes.'); return; }
 
-    human.forEach(function(par, idx) {
+    function sa(s){ return String(s||'').normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
+
+    var doc    = new jsPDF('p','mm','a4');
+    var pW     = 210; var margin = 13; var cW = pW - margin*2;
+    var cols   = [9,47,47,20,20,11]; // #, Local, Visit, Pred, Res, Pts
+    var hdrs   = ['#','Local','Visitante','Pred.','Result.','Pts'];
+    var rH     = 6.5;
+
+    human.forEach(function(par, idx){
       if (idx > 0) doc.addPage();
-      var sc = calcScore(par.preds || {}, results, settings.scoring || DEF.scoring);
+      var sc = calcScore(par.preds||{}, results, settings.scoring||DEF.scoring);
+      var y  = margin;
 
+      // ── Header ──
       doc.setFontSize(15); doc.setFont('helvetica','bold');
-      doc.text('POLLA MUNDIALISTA 2026', 105, 17, { align:'center' });
+      doc.text('POLLA MUNDIALISTA 2026', pW/2, y, {align:'center'}); y += 7;
       doc.setFontSize(12);
-      doc.text(sa(par.name), 105, 25, { align:'center' });
-      doc.setFontSize(8); doc.setFont('helvetica','normal');
-      doc.text('PIN: ' + (par.pin||'—') + '   |   Total: ' + sc.pts + ' pts', 105, 31, { align:'center' });
+      doc.text(sa(par.name), pW/2, y, {align:'center'}); y += 6;
+      doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+      doc.setTextColor(80,80,80);
+      doc.text('PIN: '+(par.pin||'-')+'   |   Total: '+sc.pts+' pts', pW/2, y, {align:'center'});
+      doc.setTextColor(0,0,0);
+      y += 7;
 
-      var body = MATCHES.map(function(m) {
+      // ── Column headers ──
+      doc.setFillColor(30,50,100); doc.setTextColor(255,255,255);
+      doc.rect(margin, y, cW, rH, 'F');
+      doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+      var cx = margin + 1.5;
+      hdrs.forEach(function(h,i){ doc.text(h, cx, y+4.5); cx += cols[i]; });
+      doc.setTextColor(0,0,0); y += rH;
+
+      // ── Rows ──
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+      MATCHES.forEach(function(m,mi){
         var pred = par.preds && par.preds[m.id];
-        var res  = results && results[m.id];
+        var res  = results   && results[m.id];
         var s    = sc.detail && sc.detail[m.id];
-        var hasPred = pred && pred.h !== undefined && pred.h !== '';
-        var hasRes  = res  && res.h  !== undefined && res.h  !== '';
-        return [
-          m.num,
-          sa(teamName(m.home)),
-          sa(teamName(m.away)),
-          hasPred ? pred.h + '-' + pred.a : '—',
-          hasRes  ? res.h  + '-' + res.a  : '—',
-          s ? s.pts : 0
-        ];
-      });
-      body.push(['','','','','TOTAL', sc.pts]);
+        var hp   = pred && pred.h !== undefined && pred.h !== '';
+        var hr   = res  && res.h  !== undefined && res.h  !== '';
 
-      doc.autoTable({
-        head: [['#','Local','Visitante','Pred.','Result.','Pts']],
-        body: body,
-        startY: 36,
-        styles: { fontSize:8, cellPadding:1.8 },
-        headStyles: { fillColor:[20,50,90], textColor:255, fontStyle:'bold' },
-        columnStyles: {
-          0: { cellWidth:8,  halign:'center' },
-          3: { cellWidth:18, halign:'center' },
-          4: { cellWidth:18, halign:'center' },
-          5: { cellWidth:10, halign:'center' }
-        },
-        didParseCell: function(d) {
-          if (d.row.index === MATCHES.length) {
-            d.cell.styles.fontStyle = 'bold';
-            d.cell.styles.fillColor = [230,230,230];
-          }
-        }
+        if (mi%2 === 0){ doc.setFillColor(247,248,250); doc.rect(margin,y,cW,rH,'F'); }
+        doc.setDrawColor(220,220,220); doc.line(margin,y+rH,margin+cW,y+rH);
+
+        var rowVals = [
+          String(m.num),
+          sa(teamName(m.home)).slice(0,20),
+          sa(teamName(m.away)).slice(0,20),
+          hp ? pred.h+'-'+pred.a : '-',
+          hr ? res.h +'-'+res.a  : '-',
+          String(s ? s.pts : 0)
+        ];
+        var clr = (!hp||!hr) ? [0,0,0] :
+                  s.status==='exact'  ? [22,163,74]  :
+                  s.status==='result' ? [37,99,235]   : [220,38,38];
+        doc.setTextColor(clr[0],clr[1],clr[2]);
+        cx = margin + 1.5;
+        rowVals.forEach(function(v,i){ doc.text(v, cx, y+4.5); cx += cols[i]; });
+        doc.setTextColor(0,0,0);
+        y += rH;
       });
+
+      // ── Total row ──
+      doc.setFillColor(220,220,220); doc.rect(margin,y,cW,rH,'F');
+      doc.setFont('helvetica','bold');
+      cx = margin + 1.5;
+      [' ',' ',' ',' ','TOTAL',String(sc.pts)].forEach(function(v,i){ doc.text(v,cx,y+4.5); cx+=cols[i]; });
     });
 
     doc.save('polla-mundialista-predicciones.pdf');
   }
 
   function downloadXLSX() {
-    if (!window.XLSX) { alert('XLSX no disponible'); return; }
-    var wb = window.XLSX.utils.book_new();
     var human = participants.filter(function(x){ return x && x.id; });
-
-    // Hoja resumen
-    var summaryRows = [['PIN','Nombre','Predicciones','Puntos']];
-    human.sort(function(a,b){
-      return calcScore(b.preds||{},results,settings.scoring).pts -
-             calcScore(a.preds||{},results,settings.scoring).pts;
-    }).forEach(function(par){
-      var sc = calcScore(par.preds||{}, results, settings.scoring||DEF.scoring);
-      var predCount = MATCHES.filter(function(m){
-        var p = par.preds && par.preds[m.id];
-        return p && p.h !== undefined && p.h !== '';
-      }).length;
-      summaryRows.push([par.pin||'—', par.name, predCount+'/'+MATCHES.length, sc.pts]);
+    var nl = "\n";
+    function xe(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function cell(v,t,s){ var st=s?' ss:StyleID="'+s+'"':''; return '<Cell'+st+'><Data ss:Type="'+(t||'String')+'">'+xe(v)+'</Data></Cell>'; }
+    function hcell(v){ return cell(v,'String','h'); }
+    function row(cells){ return '<Row>'+cells.join('')+'</Row>'+nl; }
+    var x = '<?xml version="1.0" encoding="UTF-8"?>'+nl+'<?mso-application progid="Excel.Sheet"?>'+nl;
+    x += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'+nl;
+    x += '<Styles>';
+    x += '<Style ss:ID="h"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E3264" ss:Pattern="Solid"/></Style>';
+    x += '<Style ss:ID="t"><Font ss:Bold="1"/><Interior ss:Color="#DDDDDD" ss:Pattern="Solid"/></Style>';
+    x += '<Style ss:ID="b"><Font ss:Bold="1"/></Style>';
+    x += '</Styles>'+nl;
+    x += '<Worksheet ss:Name="Resumen"><Table>'+nl;
+    x += row([hcell('Pos.'),hcell('PIN'),hcell('Nombre'),hcell('Predicciones'),hcell('Puntos')]);
+    var sorted = human.slice().sort(function(a,b){
+      return calcScore(b.preds||{},results,settings.scoring||DEF.scoring).pts -
+             calcScore(a.preds||{},results,settings.scoring||DEF.scoring).pts;
     });
-    var wsSummary = window.XLSX.utils.aoa_to_sheet(summaryRows);
-    wsSummary['!cols'] = [{wch:6},{wch:28},{wch:14},{wch:8}];
-    window.XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
-
-    // Hoja por participante
-    human.forEach(function(par) {
-      var sc = calcScore(par.preds||{}, results, settings.scoring||DEF.scoring);
-      var rows = [['#','Local','Visitante','Prediccion','Resultado','Puntos','Estado']];
-      MATCHES.forEach(function(m) {
-        var pred = par.preds && par.preds[m.id];
-        var res  = results && results[m.id];
-        var s    = sc.detail && sc.detail[m.id];
-        var hasPred = pred && pred.h !== undefined && pred.h !== '';
-        var hasRes  = res  && res.h  !== undefined && res.h  !== '';
-        var estado = !hasPred ? 'Sin prediccion' :
-                     !hasRes  ? 'Pendiente' :
-                     s.status === 'exact'  ? 'Exacto (+4)' :
-                     s.status === 'result' ? 'Resultado (+1)' : 'Incorrecto (0)';
-        rows.push([
-          m.num,
-          teamName(m.home), teamName(m.away),
-          hasPred ? pred.h+'-'+pred.a : '-',
-          hasRes  ? res.h +'-'+res.a  : '-',
-          s ? s.pts : 0,
-          estado
-        ]);
+    sorted.forEach(function(par,i){
+      var sc = calcScore(par.preds||{},results,settings.scoring||DEF.scoring);
+      var n = MATCHES.filter(function(m){ var p=par.preds&&par.preds[m.id]; return p&&p.h!==undefined&&p.h!==''; }).length;
+      x += row([cell(i+1,'Number'),cell(par.pin||'-'),cell(par.name),cell(n+'/'+MATCHES.length),cell(sc.pts,'Number','b')]);
+    });
+    x += '</Table></Worksheet>'+nl;
+    human.forEach(function(par){
+      var sc = calcScore(par.preds||{},results,settings.scoring||DEF.scoring);
+      var sn = par.name.replace(/[:<>\/\?\*\[\]"&]/g,'').slice(0,31)||par.pin;
+      x += '<Worksheet ss:Name="'+xe(sn)+'"><Table>'+nl;
+      x += row([hcell('#'),hcell('Local'),hcell('Visitante'),hcell('Prediccion'),hcell('Resultado'),hcell('Pts'),hcell('Estado')]);
+      MATCHES.forEach(function(m){
+        var pred=par.preds&&par.preds[m.id]; var res=results&&results[m.id]; var s=sc.detail&&sc.detail[m.id];
+        var hp=pred&&pred.h!==undefined&&pred.h!==''; var hr=res&&res.h!==undefined&&res.h!=='';
+        var est=!hp?'Sin prediccion':!hr?'Pendiente':s.status==='exact'?'Exacto (+4)':s.status==='result'?'Resultado (+1)':'Incorrecto (0)';
+        x += row([cell(m.num,'Number'),cell(teamName(m.home)),cell(teamName(m.away)),
+          cell(hp?pred.h+'-'+pred.a:'-'),cell(hr?res.h+'-'+res.a:'-'),cell(s?s.pts:0,'Number'),cell(est)]);
       });
-      rows.push(['','','','','TOTAL', sc.pts, '']);
-
-      var ws = window.XLSX.utils.aoa_to_sheet(rows);
-      ws['!cols'] = [{wch:4},{wch:22},{wch:22},{wch:10},{wch:10},{wch:7},{wch:16}];
-      var sheetName = par.name.replace(/[:\\\/\?\*\[\]]/g,'').slice(0,31) || par.pin;
-      window.XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      x += row([cell(''),cell(''),cell(''),cell(''),cell('TOTAL','String','t'),cell(sc.pts,'Number','t'),cell('')]);
+      x += '</Table></Worksheet>'+nl;
     });
-
-    window.XLSX.writeFile(wb, 'polla-mundialista-predicciones.xlsx');
+    x += '</Workbook>';
+    var blob = new Blob([x],{type:'application/vnd.ms-excel;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href=url; a.download='polla-mundialista-predicciones.xls';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
   }
 
   // Generar 40 PINs automáticamente (3 caracteres alfanuméricos)
