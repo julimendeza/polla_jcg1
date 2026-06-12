@@ -211,5 +211,15 @@ function HomeView(p) {
       </div>
     </${Card}>
 
+<!-- Disclaimer eliminatoria -->
+    <div style=${{
+      marginTop:20, padding:"12px 16px", borderRadius:12,
+      background:thm.inv(.03), border:thm.bdr(1,.07),
+      fontSize:12, color:thm.inv(.35), textAlign:"center", lineHeight:1.7
+    }}>
+      ⚽ Los partidos de fase eliminatoria (Ronda de 32 hasta la Final) se agregarán
+      a medida que se confirmen los equipos clasificados.
+    </div>
+
   </div>`;
 }
