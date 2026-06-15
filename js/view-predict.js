@@ -58,17 +58,33 @@ function PredictView(p) {
   async function handleSave() {
     setSaving(true);
     var pinId = "pin_" + pinCode.trim().toUpperCase();
+    var now = new Date().toISOString();
+
+    // Agregar savedAt a cada predicción de partido abierto
+    var predsStamped = {};
+    MATCHES.forEach(function(m) {
+      var pr = preds[m.id];
+      if (!pr || pr.h === undefined || pr.h === '') return;
+      if (isOpen(m)) {
+        // Partido abierto: actualizar timestamp
+        predsStamped[m.id] = Object.assign({}, pr, { savedAt: now });
+      } else {
+        // Partido cerrado: conservar el timestamp original si existe
+        predsStamped[m.id] = pr;
+      }
+    });
+
     var upd = existId
       ? participants.map(function(x){
           return x.id === pinId
-            ? Object.assign({}, x, { preds: preds })
+            ? Object.assign({}, x, { preds: predsStamped })
             : x;
         })
-      : participants.concat([{ id: pinId, name: name, pin: pinCode.trim().toUpperCase(), preds: preds }]);
+      : participants.concat([{ id: pinId, name: name, pin: pinCode.trim().toUpperCase(), preds: predsStamped }]);
     await saveP(upd);
     if (!existId) {
       await pins.markUsed(pinCode.trim().toUpperCase(), name);
-      setExistId(pinId); // ← evita duplicado si el usuario edita y guarda de nuevo
+      setExistId(pinId);
     }
     setSaving(false);
     setStep(2);

@@ -22,6 +22,7 @@ function AdminView(p) {
   var bulkSt   = useState(false); var showBulk = bulkSt[0], setShowBulk = bulkSt[1];
   var editIdSt = useState(null); var editingId = editIdSt[0], setEditingId = editIdSt[1];
   var editNameSt = useState(""); var editingName = editNameSt[0], setEditingName = editNameSt[1];
+  var tsIdSt = useState(null); var tsId = tsIdSt[0], setTsId = tsIdSt[1];
 
   useEffect(function(){ setLocResults(Object.assign({}, results)); }, [results]);
   useEffect(function(){ setLocSettings(Object.assign({}, DEF, settings)); }, [settings]);
@@ -391,11 +392,12 @@ function AdminView(p) {
           }).length;
           return html`<div key=${par.id} style=${{
             borderRadius:12, marginBottom:8,
-            background:thm.inv(.03), border: editingId===par.id ? thm.bdra(1,.3) : thm.bdr(1,.07),
+            background:thm.inv(.03),
+            border: editingId===par.id ? thm.bdra(1,.3) : tsId===par.id ? thm.bdra(1,.2) : thm.bdr(1,.07),
             overflow:"hidden"
           }}>
             <!-- Fila principal -->
-            <div style=${{display:"flex", alignItems:"center", gap:12, padding:"12px 14px"}}>
+            <div style=${{display:"flex", alignItems:"center", gap:10, padding:"12px 14px", flexWrap:"wrap"}}>
               <div style=${{
                 width:36, height:36, borderRadius:10, flexShrink:0,
                 background:thm.a(.15), color:thm.accent,
@@ -414,22 +416,81 @@ function AdminView(p) {
               </div>
               <${Btn} v="secondary"
                 onClick=${function(){
+                  setTsId(tsId===par.id ? null : par.id);
+                  setEditingId(null);
+                }}
+                sx=${{padding:"6px 10px",fontSize:11}}>🕐</${Btn}>
+              <${Btn} v="secondary"
+                onClick=${function(){
                   setEditingId(editingId===par.id ? null : par.id);
                   setEditingName(par.name);
+                  setTsId(null);
                 }}
                 sx=${{padding:"6px 10px",fontSize:11}}>✏️</${Btn}>
               <${Btn} v="danger"
                 onClick=${function(){ handleDeleteParticipant(par.id); }}
                 sx=${{padding:"6px 10px",fontSize:11}}>🗑</${Btn}>
             </div>
+
+            <!-- Panel de timestamps -->
+            ${tsId === par.id && html`<div style=${{
+              padding:"12px 14px 16px", borderTop:thm.bdr(1,.08),
+              background:thm.inv(.02)
+            }}>
+              <div style=${{
+                fontSize:10,fontWeight:700,color:thm.inv(.35),
+                letterSpacing:".08em",marginBottom:10,textTransform:"uppercase"
+              }}>🕐 Predicciones — hora de guardado (COL)</div>
+              ${MATCHES.map(function(m){
+                var pr  = par.preds && par.preds[m.id];
+                var res = results && results[m.id];
+                var hasPred = pr && pr.h !== undefined && pr.h !== "";
+                var savedAt = pr && pr.savedAt;
+                var kickoff = new Date(m.kickoff);
+                var savedDate = savedAt ? new Date(savedAt) : null;
+                var lateFlag = savedDate && savedDate > kickoff;
+                function toColStr(d) {
+                  if (!d) return "—";
+                  var co = new Date(d.getTime() - 5*60*60*1000);
+                  var pad = function(n){ return n.toString().padStart(2,"0"); };
+                  return co.getUTCDate()+"/"+(co.getUTCMonth()+1)+" "+pad(co.getUTCHours())+":"+pad(co.getUTCMinutes());
+                }
+                return html`<div key=${m.id} style=${{
+                  display:"flex", alignItems:"center", gap:8,
+                  padding:"6px 0", borderBottom:thm.bdr(1,.05),
+                  opacity: hasPred ? 1 : 0.45
+                }}>
+                  <span style=${{width:20,fontSize:10,color:thm.inv(.35),fontWeight:700}}>${m.num}</span>
+                  <span style=${{flex:1,fontSize:11,color:thm.inv(.7)}}>
+                    ${teamName(m.home)} vs ${teamName(m.away)}
+                  </span>
+                  <span style=${{
+                    fontSize:12, fontWeight:700, minWidth:36, textAlign:"center",
+                    color: !hasPred ? thm.inv(.25) :
+                           (res && res.h !== undefined) ?
+                             (sc.detail[m.id] && sc.detail[m.id].status==="exact" ? "#4ade80" :
+                              sc.detail[m.id] && sc.detail[m.id].status==="result" ? thm.accent : "#f87171")
+                             : thm.inv(.6)
+                  }}>
+                    ${hasPred ? pr.h+"-"+pr.a : "—"}
+                  </span>
+                  <span style=${{
+                    fontSize:10, minWidth:72, textAlign:"right",
+                    color: lateFlag ? "#f87171" : thm.inv(.3),
+                    fontWeight: lateFlag ? 700 : 400
+                  }}>
+                    ${lateFlag ? "⚠️ " : ""}${toColStr(savedDate)}
+                  </span>
+                </div>`;
+              })}
+            </div>`}
+
             <!-- Panel de edición inline -->
             ${editingId === par.id && html`<div style=${{
               padding:"10px 14px 14px", borderTop:thm.bdr(1,.08),
               background:thm.a(.04), display:"flex", gap:8, alignItems:"center"
             }}>
-              <input
-                type="text"
-                value=${editingName}
+              <input type="text" value=${editingName}
                 onInput=${function(e){ setEditingName(e.target.value); }}
                 onKeyDown=${function(e){
                   if (e.key==="Enter") handleRename(par.id);
@@ -448,6 +509,7 @@ function AdminView(p) {
                 sx=${{padding:"7px 10px",fontSize:12}}>✕</${Btn}>
             </div>`}
           </div>`;
+
         })
       }
     </div>`}
