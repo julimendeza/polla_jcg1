@@ -365,11 +365,16 @@ function AdminView(p) {
             <${FlagImg} team=${m.away}/>
             <span style=${{fontSize:12,color:thm.inv(.7)}}>${teamName(m.away)}</span>
           </div>
-          <span style=${{
-            fontSize:9,padding:"2px 6px",borderRadius:4,flexShrink:0,
-            background:open?thm.a(.1):thm.inv(.06),
-            color:open?thm.accent:thm.inv(.3),fontWeight:700
-          }}>${open?"ABIERTO":"JUGADO"}</span>
+          <div style=${{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2,flexShrink:0}}>
+            <span style=${{
+              fontSize:9,padding:"2px 6px",borderRadius:4,
+              background:open?thm.a(.1):thm.inv(.06),
+              color:open?thm.accent:thm.inv(.3),fontWeight:700
+            }}>${open?"ABIERTO":"JUGADO"}</span>
+            <span style=${{fontSize:9,color:thm.inv(.25)}}>
+              ${fmtKickoff(m.kickoff)}
+            </span>
+          </div>
         </div>`;
       })}
       <${Btn} onClick=${handleSaveResults} full=${true} sx=${{marginTop:8,padding:"13px"}}>
