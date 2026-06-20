@@ -10,12 +10,13 @@ var MATCHES = [
   { id:"m05", num:5,  phase:"Grupos", home:"Belgium",       away:"Egypt",         kickoff:"2026-06-15T22:00:00Z" }, // lun 15 jun · 17:00 COL
   { id:"m06", num:6,  phase:"Grupos", home:"Argentina",     away:"Algeria",       kickoff:"2026-06-17T01:00:00Z" }, // mar 16 jun · 20:00 COL
   { id:"m07", num:7,  phase:"Grupos", home:"Uzbekistan",    away:"Colombia",      kickoff:"2026-06-18T02:00:00Z" }, // mié 17 jun · 21:00 COL
+ 
+  // ── Jornada 2 (Jun 18–23) ────────────────────────────────────────
+  { id:"m08", num:8,  phase:"Grupos", home:"Mexico",        away:"South Korea",   kickoff:"2026-06-19T01:00:00Z" }, // jue 18 jun · 20:00 COL
+  { id:"m09", num:9,  phase:"Grupos", home:"Turkey",        away:"Paraguay",      kickoff:"2026-06-20T03:00:00Z" }, // vie 19 jun · 22:00 COL
   { id:"m10", num:10, phase:"Grupos", home:"Germany",       away:"Ivory Coast",   kickoff:"2026-06-20T20:00:00Z" }, // sáb 20 jun · 15:00 COL
   { id:"m11", num:11, phase:"Grupos", home:"Spain",         away:"Saudi Arabia",  kickoff:"2026-06-21T16:00:00Z" }, // dom 21 jun · 11:00 COL
   { id:"m12", num:12, phase:"Grupos", home:"France",        away:"Iraq",          kickoff:"2026-06-22T21:00:00Z" }, // lun 22 jun · 16:00 COL
-  // ── Jornada 2 (Jun 18–23) ────────────────────────────────────────
-  { id:"m08", num:8,  phase:"Grupos", home:"Mexico",        away:"South Korea",   kickoff:"2026-06-19T01:00:00Z" }, // jue 18 jun · 20:00 COL
-  { id:"m09", num:9,  phase:"Grupos", home:"Turkey",        away:"Paraguay",      kickoff:"2026-06-20T04:00:00Z" }, // vie 19 jun · 23:00 COL
   { id:"m13", num:13, phase:"Grupos", home:"Colombia",      away:"DR Congo",      kickoff:"2026-06-24T02:00:00Z" }, // mar 23 jun · 21:00 COL
   { id:"m14", num:14, phase:"Grupos", home:"Scotland",      away:"Brazil",        kickoff:"2026-06-24T22:00:00Z" }, // mié 24 jun · 17:00 COL
   { id:"m15", num:15, phase:"Grupos", home:"Ecuador",       away:"Germany",       kickoff:"2026-06-25T20:00:00Z" }, // jue 25 jun · 15:00 COL
