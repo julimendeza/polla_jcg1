@@ -91,6 +91,30 @@ function HomeView(p) {
       <p style=${{fontSize:12,color:thm.inv(.55),lineHeight:1.6}}>${T.salsaSub}</p>
     </div>
 
+<!-- Foto + mensaje -->
+    <div style=${{marginBottom:20, borderRadius:16, overflow:"hidden", border:thm.bdra(1,.15)}}>
+      <img
+        src="IMG-20260627-WA0018.jpg"
+        alt="Productos Salsamentaria Juanchito"
+        style=${{width:"100%", display:"block"}}
+      />
+      <div style=${{
+        padding:"18px 20px", textAlign:"center",
+        background:"linear-gradient(135deg, rgba(56,189,248,0.07), rgba(14,165,233,0.04))"
+      }}>
+        <p style=${{
+          color:thm.inv(.7), fontSize:13, lineHeight:1.9,
+          fontStyle:"italic", marginBottom:10
+        }}>
+          "Cada vez que eliges un producto artesanal, fortaleces la economía
+          de nuestra región y disfrutas alimentos elaborados con calidad y dedicación."
+        </p>
+        <p style=${{color:thm.accent, fontWeight:700, fontSize:14}}>
+          ¡Gracias por preferirnos y ser parte de esta historia! ❤️
+        </p>
+      </div>
+    </div>
+    
     <!-- Premios -->
     <${Card} sx=${{marginBottom:20,padding:"16px 18px"}}>
       <div style=${{
@@ -221,33 +245,6 @@ function HomeView(p) {
       a medida que se confirmen los equipos clasificados.
     </div>
 
-<!-- Footer Salsamentaria -->
-    <div style=${{
-      marginTop:28, padding:"22px 20px",
-      borderRadius:16, textAlign:"center",
-      background:"linear-gradient(135deg, rgba(56,189,248,0.07), rgba(14,165,233,0.04))",
-      border: thm.bdra(1,.15)
-    }}>
-      <div style=${{fontSize:22, marginBottom:10}}>🥩🌿</div>
-      <p style=${{
-        color:thm.inv(.7), fontSize:13, lineHeight:1.9,
-        fontStyle:"italic", marginBottom:10
-      }}>
-        "Cada vez que eliges un producto artesanal, fortaleces la economía
-        de nuestra región y disfrutas alimentos elaborados con calidad y dedicación."
-      </p>
-      <p style=${{
-        color:thm.accent, fontWeight:700, fontSize:14, letterSpacing:".02em"
-      }}>
-        ¡Gracias por preferirnos y ser parte de esta historia! ❤️
-      </p>
-      <div style=${{
-        marginTop:14, fontSize:11, color:thm.inv(.3), letterSpacing:".06em",
-        textTransform:"uppercase", fontWeight:700
-      }}>
-        🏪 Salsamentaria Juanchito
-      </div>
-    </div>
 
   </div>`;
 }
