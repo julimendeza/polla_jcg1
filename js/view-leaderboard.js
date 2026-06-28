@@ -140,7 +140,7 @@ function LeaderboardView(p) {
               var pr  = r.preds && r.preds[m.id];
               var res = results && results[m.id];
               return html`<${MatchCard} key=${m.id}
-                match=${m} result=${res} pred=${pr}/>`;
+                match=${m} result=${res} results=${results} pred=${pr}/>`;
             })}
           </div>`}
         </div>`;

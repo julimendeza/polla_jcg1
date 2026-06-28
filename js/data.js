@@ -41,6 +41,31 @@ var MATCHES = [
   { id:"r32_15", num:32, phase:"Ronda de 32", home:"Argentina",    away:"Cape Verde",    kickoff:"2026-07-03T22:00:00Z" }, // vie 3 jul · 17:00 COL
   { id:"r32_16", num:33, phase:"Ronda de 32", home:"Colombia",     away:"Ghana",         kickoff:"2026-07-04T01:30:00Z" }, // vie 3 jul · 20:30 COL
 
+  // ── Octavos de Final (Jul 4 – 7) ─────────────────────────────────
+  // homeRef/awayRef "W18" = ganador del partido #18
+  { id:"r16_01", num:34, phase:"Octavos", homeRef:"W18", awayRef:"W21", kickoff:"2026-07-04T18:00:00Z" }, // sáb 4 jul · 13:00 COL
+  { id:"r16_02", num:35, phase:"Octavos", homeRef:"W20", awayRef:"W23", kickoff:"2026-07-04T22:00:00Z" }, // sáb 4 jul · 17:00 COL
+  { id:"r16_03", num:36, phase:"Octavos", homeRef:"W19", awayRef:"W22", kickoff:"2026-07-05T21:00:00Z" }, // dom 5 jul · 16:00 COL
+  { id:"r16_04", num:37, phase:"Octavos", homeRef:"W24", awayRef:"W25", kickoff:"2026-07-06T01:00:00Z" }, // dom 5 jul · 20:00 COL
+  { id:"r16_05", num:38, phase:"Octavos", homeRef:"W28", awayRef:"W29", kickoff:"2026-07-06T20:00:00Z" }, // lun 6 jul · 15:00 COL
+  { id:"r16_06", num:39, phase:"Octavos", homeRef:"W26", awayRef:"W27", kickoff:"2026-07-07T01:00:00Z" }, // lun 6 jul · 20:00 COL
+  { id:"r16_07", num:40, phase:"Octavos", homeRef:"W32", awayRef:"W31", kickoff:"2026-07-07T17:00:00Z" }, // mar 7 jul · 12:00 COL
+  { id:"r16_08", num:41, phase:"Octavos", homeRef:"W30", awayRef:"W33", kickoff:"2026-07-07T21:00:00Z" }, // mar 7 jul · 16:00 COL
+
+  // ── Cuartos de Final (Jul 9 – 11) ────────────────────────────────
+  { id:"qf_01", num:42, phase:"Cuartos", homeRef:"W35", awayRef:"W34", kickoff:"2026-07-09T21:00:00Z" }, // jue 9 jul · 16:00 COL
+  { id:"qf_02", num:43, phase:"Cuartos", homeRef:"W38", awayRef:"W39", kickoff:"2026-07-11T01:00:00Z" }, // vie 10 jul · 20:00 COL
+  { id:"qf_03", num:44, phase:"Cuartos", homeRef:"W36", awayRef:"W37", kickoff:"2026-07-11T22:00:00Z" }, // sáb 11 jul · 17:00 COL
+  { id:"qf_04", num:45, phase:"Cuartos", homeRef:"W40", awayRef:"W41", kickoff:"2026-07-12T02:00:00Z" }, // sáb 11 jul · 21:00 COL
+
+  // ── Semifinales (Jul 14 – 15) ────────────────────────────────────
+  { id:"sf_01", num:46, phase:"Semifinal", homeRef:"W42", awayRef:"W43", kickoff:"2026-07-15T01:00:00Z" }, // mar 14 jul · 20:00 COL
+  { id:"sf_02", num:47, phase:"Semifinal", homeRef:"W44", awayRef:"W45", kickoff:"2026-07-16T01:00:00Z" }, // mié 15 jul · 20:00 COL
+
+  // ── Tercer Puesto y Final (Jul 18 – 19) ──────────────────────────
+  { id:"third", num:48, phase:"Tercer Puesto", homeRef:"L46", awayRef:"L47", kickoff:"2026-07-18T20:00:00Z" }, // sáb 18 jul · 15:00 COL
+  { id:"final", num:49, phase:"Final",         homeRef:"W46", awayRef:"W47", kickoff:"2026-07-19T19:00:00Z" }, // dom 19 jul · 14:00 COL
+
 ];
 
 // ── ISO codes para banderas ──────────────────────────────────────────

@@ -20,7 +20,7 @@ function HomeView(p) {
   }, [participants, results, settings]);
 
   var completed = completedCount(results);
-  var openCount = MATCHES.filter(isOpen).length;
+  var openCount = MATCHES.filter(function(m){ return isOpen(m, results); }).length;
 
   // Tour primer acceso
   var tourDone = false;
@@ -202,11 +202,12 @@ function HomeView(p) {
       <div style=${{
         fontSize:11,fontWeight:700,color:thm.inv(.35),
         letterSpacing:".08em",marginBottom:10,textTransform:"uppercase"
-      }}>📋 Los 17 partidos</div>
+      }}>📋 Todos los partidos</div>
       ${MATCHES.map(function(m){
         return html`<${MatchCard} key=${m.id}
           match=${m}
           result=${results && results[m.id]}
+          results=${results}
           pred=${null}
         />`;
       })}

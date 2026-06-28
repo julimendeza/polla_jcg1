@@ -65,7 +65,7 @@ function PredictView(p) {
     MATCHES.forEach(function(m) {
       var pr = preds[m.id];
       if (!pr || pr.h === undefined || pr.h === '') return;
-      if (isOpen(m)) {
+      if (isOpen(m, results)) {
         // Partido abierto: actualizar timestamp
         predsStamped[m.id] = Object.assign({}, pr, { savedAt: now });
       } else {
@@ -170,7 +170,7 @@ function PredictView(p) {
     </div>
 
     <!-- Nota partidos cerrados -->
-    ${MATCHES.some(function(m){ return !isOpen(m); }) && html`<div style=${{
+    ${MATCHES.some(function(m){ return !isOpen(m, results); }) && html`<div style=${{
       marginBottom:14,padding:"10px 14px",borderRadius:10,
       background:thm.inv(.04),border:thm.bdr(1,.08),
       fontSize:12,color:thm.inv(.45),display:"flex",gap:8,alignItems:"center"
@@ -188,7 +188,7 @@ function PredictView(p) {
           letterSpacing:".08em",marginBottom:10,textTransform:"uppercase"
         }}>📋 ${phase}</div>
         ${phaseMatches.map(function(m){
-          var locked = !isOpen(m);
+          var locked = !isOpen(m, results);
           var pr = preds[m.id] || {};
           var res = results && results[m.id];
           return html`<div key=${m.id}>
@@ -218,6 +218,7 @@ function PredictView(p) {
               av=${pr.a || ""}
               locked=${locked}
               result=${res}
+              results=${results}
               onH=${function(v){ if(!locked) setPred(m.id,"h",v); }}
               onA=${function(v){ if(!locked) setPred(m.id,"a",v); }}
             />

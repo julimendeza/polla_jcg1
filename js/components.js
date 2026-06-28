@@ -1,3 +1,35 @@
+// ── Helper: nombre + bandera de un equipo (resuelve refs KO) ──────────
+// side = "home"/"away". Si el equipo no está definido, muestra placeholder.
+function TeamSide(p) {
+  var match = p.match, side = p.side, results = p.results, align = p.align;
+  var d = (typeof displayTeam === "function")
+    ? displayTeam(match, side, results)
+    : { team: match[side], isPlaceholder: false };
+  var ctx = useApp();
+  var thm = ctx.thm || THEMES.noche;
+  var fontSize = p.fontSize || 12;
+
+  var nameEl = html`<span style=${{
+    fontSize: fontSize, fontWeight:600,
+    color: d.isPlaceholder ? thm.inv(.4) : thm.inv(.8),
+    fontStyle: d.isPlaceholder ? "italic" : "normal",
+    textAlign: align === "right" ? "right" : "left", lineHeight:1.2
+  }}>${d.isPlaceholder ? d.team : teamName(d.team)}</span>`;
+
+  var flagEl = d.isPlaceholder
+    ? html`<span style=${{fontSize:13, opacity:.4}}>🏳️</span>`
+    : html`<${FlagImg} team=${d.team}/>`;
+
+  if (align === "right") {
+    return html`<div style=${{flex:1, display:"flex", alignItems:"center", gap:7, justifyContent:"flex-end"}}>
+      ${nameEl}${flagEl}
+    </div>`;
+  }
+  return html`<div style=${{flex:1, display:"flex", alignItems:"center", gap:7}}>
+    ${flagEl}${nameEl}
+  </div>`;
+}
+
 // ── Botón ─────────────────────────────────────────────────────────────
 function Btn(p) {
   var ctx = useApp();
@@ -108,12 +140,7 @@ function MatchInputRow(p) {
     transition:"all .15s"
   }}>
     <!-- Local -->
-    <div style=${{flex:1, display:"flex", alignItems:"center", gap:7, justifyContent:"flex-end"}}>
-      <span style=${{fontSize:12, fontWeight:600, color:thm.inv(.8), textAlign:"right", lineHeight:1.2}}>
-        ${teamName(match.home)}
-      </span>
-      <${FlagImg} team=${match.home}/>
-    </div>
+    <${TeamSide} match=${match} side="home" results=${p.results} align="right"/>
 
     <!-- Scores -->
     <div style=${{display:"flex", alignItems:"center", gap:6}}>
@@ -135,12 +162,7 @@ function MatchInputRow(p) {
     </div>
 
     <!-- Visitante -->
-    <div style=${{flex:1, display:"flex", alignItems:"center", gap:7}}>
-      <${FlagImg} team=${match.away}/>
-      <span style=${{fontSize:12, fontWeight:600, color:thm.inv(.8), lineHeight:1.2}}>
-        ${teamName(match.away)}
-      </span>
-    </div>
+    <${TeamSide} match=${match} side="away" results=${p.results} align="left"/>
 
     <!-- Indicador de estado -->
     <div style=${{width:22, textAlign:"center", fontSize:14}}>
@@ -161,7 +183,7 @@ function MatchCard(p) {
   var hasRes = result && result.h !== "" && result.h !== undefined;
   var hasPred = pred && pred.h !== "" && pred.h !== undefined;
   var score = hasPred && hasRes ? scoreMatch(pred, result, null) : null;
-  var open = isOpen(match);
+  var open = isOpen(match, p.results);
 
   return html`<div style=${{
     display:"flex", alignItems:"center", gap:8,
@@ -179,10 +201,7 @@ function MatchCard(p) {
     }}>${match.num}</div>
 
     <!-- Local -->
-    <div style=${{flex:1, display:"flex", alignItems:"center", gap:5, justifyContent:"flex-end"}}>
-      <span style=${{color:thm.inv(.7), textAlign:"right"}}>${teamName(match.home)}</span>
-      <${FlagImg} team=${match.home}/>
-    </div>
+    <${TeamSide} match=${match} side="home" results=${p.results} align="right"/>
 
     <!-- Resultado -->
     <div style=${{
@@ -200,10 +219,7 @@ function MatchCard(p) {
     </div>
 
     <!-- Visitante -->
-    <div style=${{flex:1, display:"flex", alignItems:"center", gap:5}}>
-      <${FlagImg} team=${match.away}/>
-      <span style=${{color:thm.inv(.7)}}>${teamName(match.away)}</span>
-    </div>
+    <${TeamSide} match=${match} side="away" results=${p.results} align="left"/>
 
     <!-- Predicción del usuario -->
     ${hasPred && html`<div style=${{

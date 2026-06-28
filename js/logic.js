@@ -1,7 +1,99 @@
+// ── Resolución de bracket (equipos KO) ───────────────────────────────
+// Las referencias son "W18" (ganador #18) o "L46" (perdedor #46).
+// Devuelve el nombre del equipo si ya se conoce, o null si aún no.
+
+// Busca un partido por su número
+function matchByNum(num) {
+  for (var i = 0; i < MATCHES.length; i++) {
+    if (MATCHES[i].num === num) return MATCHES[i];
+  }
+  return null;
+}
+
+// Ganador de un partido según resultado + override de penales
+function matchWinner(match, results) {
+  if (!match) return null;
+  var r = results && results[match.id];
+  if (!r || r.h === "" || r.h === undefined || r.a === "" || r.a === undefined) return null;
+  var home = resolveTeam(match, "home", results);
+  var away = resolveTeam(match, "away", results);
+  if (!home || !away) return null;
+  var rh = +r.h, ra = +r.a;
+  if (rh > ra) return home;
+  if (ra > rh) return away;
+  // Empate → ganó por penales (r.pen = "H" o "A")
+  if (r.pen === "H") return home;
+  if (r.pen === "A") return away;
+  return null; // empate sin definir penales
+}
+
+function matchLoser(match, results) {
+  if (!match) return null;
+  var r = results && results[match.id];
+  if (!r || r.h === "" || r.h === undefined || r.a === "" || r.a === undefined) return null;
+  var home = resolveTeam(match, "home", results);
+  var away = resolveTeam(match, "away", results);
+  if (!home || !away) return null;
+  var rh = +r.h, ra = +r.a;
+  if (rh > ra) return away;
+  if (ra > rh) return home;
+  if (r.pen === "H") return away;
+  if (r.pen === "A") return home;
+  return null;
+}
+
+// Resuelve una referencia "W18" / "L46" al nombre del equipo (o null)
+function resolveRef(ref, results) {
+  if (!ref) return null;
+  var type = ref.charAt(0);          // "W" o "L"
+  var num  = parseInt(ref.slice(1), 10);
+  var src  = matchByNum(num);
+  if (!src) return null;
+  return type === "W" ? matchWinner(src, results) : matchLoser(src, results);
+}
+
+// Resuelve el equipo de un partido para un lado ("home"/"away")
+// Si el partido tiene equipo fijo, lo devuelve. Si tiene ref, la resuelve.
+function resolveTeam(match, side, results) {
+  if (!match) return null;
+  var fixed = match[side];                 // home / away
+  if (fixed) return fixed;
+  var ref = match[side + "Ref"];           // homeRef / awayRef
+  return resolveRef(ref, results);
+}
+
+// Texto a mostrar cuando un equipo aún no se conoce ("Ganador #18")
+function refLabel(ref) {
+  if (!ref) return "Por definir";
+  var type = ref.charAt(0);
+  var num  = ref.slice(1);
+  return (type === "W" ? "Ganador #" : "Perdedor #") + num;
+}
+
+// Devuelve el equipo o el placeholder para mostrar
+function displayTeam(match, side, results) {
+  var team = resolveTeam(match, side, results);
+  if (team) return { team: team, isPlaceholder: false };
+  var ref = match[side + "Ref"];
+  return { team: refLabel(ref), isPlaceholder: true };
+}
+
+// ¿Están ambos equipos de un partido KO confirmados?
+function teamsKnown(match, results) {
+  return !!resolveTeam(match, "home", results) && !!resolveTeam(match, "away", results);
+}
+
 // ── ¿Está abierto un partido para predicciones? ──────────────────────
-// Un partido se cierra cuando el kickoff ha pasado (hora actual >= kickoff)
-function isOpen(match) {
-  return new Date() < new Date(match.kickoff);
+// Un partido se cierra cuando el kickoff ha pasado (hora actual >= kickoff).
+// Los partidos con referencias (KO) solo se abren cuando ambos equipos
+// están confirmados. Se necesita pasar results para esa verificación.
+function isOpen(match, results) {
+  if (new Date() >= new Date(match.kickoff)) return false;
+  // Si el partido depende de ganadores aún no definidos, no está abierto
+  if ((match.homeRef || match.awayRef) && results !== undefined) {
+    if (!teamsKnown(match, results)) return false;
+  }
+  return true;
 }
 
 // ── ¿Ha empezado el torneo? (al menos un kickoff ha pasado) ──────────

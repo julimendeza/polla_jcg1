@@ -339,18 +339,23 @@ function AdminView(p) {
       </p>
       ${MATCHES.map(function(m){
         var r = locResults[m.id] || {};
-        var open = isOpen(m);
+        var open = isOpen(m, locResults);
+        var hd = displayTeam(m, "home", locResults);
+        var ad = displayTeam(m, "away", locResults);
+        var isKO = !!(m.homeRef || m.awayRef);
+        var tied = r.h !== "" && r.h !== undefined && r.a !== "" && r.a !== undefined && (+r.h === +r.a);
+        var showPen = isKO && tied; // empate en KO → definir penales
         return html`<div key=${m.id} style=${{
-          display:"flex", alignItems:"center", gap:10,
           padding:"10px 12px", borderRadius:12, marginBottom:8,
           background:thm.inv(.03), border:thm.bdr(1,.07)
         }}>
+         <div style=${{display:"flex", alignItems:"center", gap:10}}>
           <span style=${{width:20,fontSize:10,color:thm.inv(.35),fontWeight:700,flexShrink:0}}>
             ${m.num}
           </span>
           <div style=${{flex:1,display:"flex",alignItems:"center",gap:6,justifyContent:"flex-end"}}>
-            <span style=${{fontSize:12,color:thm.inv(.7),textAlign:"right"}}>${teamName(m.home)}</span>
-            <${FlagImg} team=${m.home}/>
+            <span style=${{fontSize:12,color:hd.isPlaceholder?thm.inv(.4):thm.inv(.7),textAlign:"right",fontStyle:hd.isPlaceholder?"italic":"normal"}}>${hd.isPlaceholder?hd.team:teamName(hd.team)}</span>
+            ${hd.isPlaceholder ? html`<span style=${{fontSize:13,opacity:.4}}>🏳️</span>` : html`<${FlagImg} team=${hd.team}/>`}
           </div>
           <div style=${{display:"flex",alignItems:"center",gap:5}}>
             <input type="number" min="0" max="20" value=${r.h||""}
@@ -362,8 +367,8 @@ function AdminView(p) {
               style=${scoreInputStyle}/>
           </div>
           <div style=${{flex:1,display:"flex",alignItems:"center",gap:6}}>
-            <${FlagImg} team=${m.away}/>
-            <span style=${{fontSize:12,color:thm.inv(.7)}}>${teamName(m.away)}</span>
+            ${ad.isPlaceholder ? html`<span style=${{fontSize:13,opacity:.4}}>🏳️</span>` : html`<${FlagImg} team=${ad.team}/>`}
+            <span style=${{fontSize:12,color:ad.isPlaceholder?thm.inv(.4):thm.inv(.7),fontStyle:ad.isPlaceholder?"italic":"normal"}}>${ad.isPlaceholder?ad.team:teamName(ad.team)}</span>
           </div>
           <div style=${{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2,flexShrink:0}}>
             <span style=${{
@@ -375,6 +380,25 @@ function AdminView(p) {
               ${fmtKickoff(m.kickoff)}
             </span>
           </div>
+         </div>
+         ${showPen && html`<div style=${{
+            display:"flex",alignItems:"center",gap:8,marginTop:8,
+            paddingTop:8,borderTop:thm.bdr(1,.06)
+          }}>
+            <span style=${{fontSize:11,color:thm.inv(.5),fontWeight:600}}>⚽ Ganó por penales:</span>
+            <button onClick=${function(){setResult(m.id,"pen","H");}} style=${{
+              padding:"4px 10px",borderRadius:6,fontSize:11,fontWeight:700,cursor:"pointer",
+              border:r.pen==="H"?thm.bdra(1,.6):thm.bdr(1,.15),
+              background:r.pen==="H"?thm.a(.2):"transparent",
+              color:r.pen==="H"?thm.accent:thm.inv(.6),fontFamily:"'DM Sans',sans-serif"
+            }}>${hd.isPlaceholder?"Local":teamName(hd.team)}</button>
+            <button onClick=${function(){setResult(m.id,"pen","A");}} style=${{
+              padding:"4px 10px",borderRadius:6,fontSize:11,fontWeight:700,cursor:"pointer",
+              border:r.pen==="A"?thm.bdra(1,.6):thm.bdr(1,.15),
+              background:r.pen==="A"?thm.a(.2):"transparent",
+              color:r.pen==="A"?thm.accent:thm.inv(.6),fontFamily:"'DM Sans',sans-serif"
+            }}>${ad.isPlaceholder?"Visitante":teamName(ad.team)}</button>
+          </div>`}
         </div>`;
       })}
       <${Btn} onClick=${handleSaveResults} full=${true} sx=${{marginTop:8,padding:"13px"}}>
