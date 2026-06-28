@@ -23,6 +23,23 @@ var MATCHES = [
   { id:"m16", num:16, phase:"Grupos", home:"Uruguay",       away:"Spain",         kickoff:"2026-06-27T00:00:00Z" }, // vie 26 jun · 19:00 COL
   // ── Jornada 3 (Jun 24–27) ────────────────────────────────────────
   { id:"m17", num:17, phase:"Grupos", home:"Colombia",      away:"Portugal",      kickoff:"2026-06-27T23:30:00Z" }, // sáb 27 jun · 18:30 COL
+  // ── Ronda de 32 (Jun 28 – Jul 3) ─────────────────────────────────
+  { id:"r32_01", num:18, phase:"Ronda de 32", home:"South Africa", away:"Canada",        kickoff:"2026-06-28T19:00:00Z" }, // dom 28 jun · 14:00 COL
+  { id:"r32_02", num:19, phase:"Ronda de 32", home:"Brazil",       away:"Japan",         kickoff:"2026-06-29T17:00:00Z" }, // lun 29 jun · 12:00 COL
+  { id:"r32_03", num:20, phase:"Ronda de 32", home:"Germany",      away:"Paraguay",      kickoff:"2026-06-29T20:30:00Z" }, // lun 29 jun · 15:30 COL
+  { id:"r32_04", num:21, phase:"Ronda de 32", home:"Netherlands",  away:"Morocco",       kickoff:"2026-06-30T01:00:00Z" }, // lun 29 jun · 20:00 COL
+  { id:"r32_05", num:22, phase:"Ronda de 32", home:"Ivory Coast",  away:"Norway",        kickoff:"2026-06-30T17:00:00Z" }, // mar 30 jun · 12:00 COL
+  { id:"r32_06", num:23, phase:"Ronda de 32", home:"France",       away:"Sweden",        kickoff:"2026-06-30T21:00:00Z" }, // mar 30 jun · 16:00 COL
+  { id:"r32_07", num:24, phase:"Ronda de 32", home:"Mexico",       away:"Ecuador",       kickoff:"2026-07-01T01:00:00Z" }, // mar 30 jun · 20:00 COL
+  { id:"r32_08", num:25, phase:"Ronda de 32", home:"England",      away:"DR Congo",      kickoff:"2026-07-01T16:00:00Z" }, // mié 1 jul · 11:00 COL
+  { id:"r32_09", num:26, phase:"Ronda de 32", home:"Belgium",      away:"Senegal",       kickoff:"2026-07-01T20:00:00Z" }, // mié 1 jul · 15:00 COL
+  { id:"r32_10", num:27, phase:"Ronda de 32", home:"USA",          away:"Bosnia & Herz.", kickoff:"2026-07-02T00:00:00Z" }, // mié 1 jul · 19:00 COL
+  { id:"r32_11", num:28, phase:"Ronda de 32", home:"Spain",        away:"Austria",       kickoff:"2026-07-02T19:00:00Z" }, // jue 2 jul · 14:00 COL
+  { id:"r32_12", num:29, phase:"Ronda de 32", home:"Portugal",     away:"Croatia",       kickoff:"2026-07-02T23:00:00Z" }, // jue 2 jul · 18:00 COL
+  { id:"r32_13", num:30, phase:"Ronda de 32", home:"Switzerland",  away:"Algeria",       kickoff:"2026-07-03T03:00:00Z" }, // jue 2 jul · 22:00 COL
+  { id:"r32_14", num:31, phase:"Ronda de 32", home:"Australia",    away:"Egypt",         kickoff:"2026-07-03T18:00:00Z" }, // vie 3 jul · 13:00 COL
+  { id:"r32_15", num:32, phase:"Ronda de 32", home:"Argentina",    away:"Cape Verde",    kickoff:"2026-07-03T22:00:00Z" }, // vie 3 jul · 17:00 COL
+  { id:"r32_16", num:33, phase:"Ronda de 32", home:"Colombia",     away:"Ghana",         kickoff:"2026-07-04T01:30:00Z" }, // vie 3 jul · 20:30 COL
 
 ];
 
