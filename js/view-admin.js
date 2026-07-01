@@ -59,23 +59,16 @@ function AdminView(p) {
 
   async function handleDeleteParticipant(id) {
     if (!window.confirm(T.delConfirm)) return;
-    // Actualizar estado local + borrar solo ese nodo en Firebase
-    saveParticipants(participants.filter(function(x){ return x && x.id !== id; }));
-    await db.deleteChild("jcg_p", id);
+    await saveParticipants(participants.filter(function(x){ return x && x.id !== id; }));
   }
 
   async function handleRename(id) {
     var trimmed = editingName.trim();
     if (!trimmed) return;
-    var target = participants.find(function(x){ return x && x.id === id; });
     var updated = participants.map(function(x){
       return x && x.id === id ? Object.assign({}, x, { name: trimmed }) : x;
     });
-    saveParticipants(updated);
-    // Escribir solo ese nodo
-    if (target) {
-      await db.setChild("jcg_p", id, Object.assign({}, target, { name: trimmed }));
-    }
+    await saveParticipants(updated);
     setEditingId(null);
     flash();
   }
@@ -349,7 +342,8 @@ function AdminView(p) {
         var open = isOpen(m, locResults);
         var hd = displayTeam(m, "home", locResults);
         var ad = displayTeam(m, "away", locResults);
-        var isKO = !!(m.homeRef || m.awayRef);
+        // KO = cualquier fase eliminatoria (empates se definen por penales)
+        var isKO = m.phase !== "Grupos";
         var tied = r.h !== "" && r.h !== undefined && r.a !== "" && r.a !== undefined && (+r.h === +r.a);
         var showPen = isKO && tied; // empate en KO → definir penales
         return html`<div key=${m.id} style=${{
