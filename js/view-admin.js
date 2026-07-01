@@ -59,16 +59,23 @@ function AdminView(p) {
 
   async function handleDeleteParticipant(id) {
     if (!window.confirm(T.delConfirm)) return;
-    await saveParticipants(participants.filter(function(x){ return x && x.id !== id; }));
+    // Actualizar estado local + borrar solo ese nodo en Firebase
+    saveParticipants(participants.filter(function(x){ return x && x.id !== id; }));
+    await db.deleteChild("jcg_p", id);
   }
 
   async function handleRename(id) {
     var trimmed = editingName.trim();
     if (!trimmed) return;
+    var target = participants.find(function(x){ return x && x.id === id; });
     var updated = participants.map(function(x){
       return x && x.id === id ? Object.assign({}, x, { name: trimmed }) : x;
     });
-    await saveParticipants(updated);
+    saveParticipants(updated);
+    // Escribir solo ese nodo
+    if (target) {
+      await db.setChild("jcg_p", id, Object.assign({}, target, { name: trimmed }));
+    }
     setEditingId(null);
     flash();
   }

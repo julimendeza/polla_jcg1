@@ -34,6 +34,46 @@ var db = {
   set: async function(key, value) {
     if (db._url) await db._fb('PUT', key, value);
     try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
+  },
+
+  // Escribe SOLO un nodo hijo (ej. jcg_p/pin_ABC) sin tocar los demás.
+  // Evita la condición de carrera donde un usuario pisa la lista completa.
+  setChild: async function(key, childKey, value) {
+    if (db._url) {
+      await db._fb('PUT', key + '/' + childKey, value);
+    }
+    // Espejo local: actualizar el array en localStorage
+    try {
+      var cur = null;
+      try { cur = JSON.parse(localStorage.getItem(key)); } catch(e){}
+      var map = {};
+      if (Array.isArray(cur)) {
+        cur.forEach(function(x){ if (x && x.id) map[x.id] = x; });
+      } else if (cur && typeof cur === 'object') {
+        map = cur;
+      }
+      map[childKey] = value;
+      localStorage.setItem(key, JSON.stringify(map));
+    } catch(e) {}
+  },
+
+  // Borra SOLO un nodo hijo (ej. jcg_p/pin_ABC).
+  deleteChild: async function(key, childKey) {
+    if (db._url) {
+      await db._fb('DELETE', key + '/' + childKey);
+    }
+    try {
+      var cur = null;
+      try { cur = JSON.parse(localStorage.getItem(key)); } catch(e){}
+      var map = {};
+      if (Array.isArray(cur)) {
+        cur.forEach(function(x){ if (x && x.id) map[x.id] = x; });
+      } else if (cur && typeof cur === 'object') {
+        map = cur;
+      }
+      delete map[childKey];
+      localStorage.setItem(key, JSON.stringify(map));
+    } catch(e) {}
   }
 };
 

@@ -52,6 +52,13 @@ function App() {
     return async function(data){ setter(data); await db.set(key, data); };
   }
 
+  // Guarda SOLO el nodo de un participante en Firebase (jcg_p/pin_XXX),
+  // pero actualiza la lista completa en el estado local de React.
+  async function saveMine(childKey, record, fullList) {
+    setParts(fullList);
+    await db.setChild("jcg_p", childKey, record);
+  }
+
   function setTheme(t) {
     setThemeRaw(t);
     try { localStorage.setItem("jcg_theme", t); } catch(e){}
@@ -103,6 +110,7 @@ function App() {
         participants=${parts}
         results=${results}
         saveP=${sv("jcg_p", setParts)}
+        saveMine=${saveMine}
         setView=${setView}
         settings=${settings}/>`}
 
@@ -115,7 +123,7 @@ function App() {
         settings=${settings}
         saveResults=${sv("jcg_r", setResults)}
         saveSettings=${saveSettings}
-        saveParticipants=${sv("jcg_p", setParts)}/>`}
+        saveParticipants=${setParts}/>`}
 
     </div>
   </${AppCtx.Provider}>`;

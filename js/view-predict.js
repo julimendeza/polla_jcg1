@@ -3,6 +3,7 @@ function PredictView(p) {
   var thm = ctx.thm || THEMES.noche;
   var participants = p.participants;
   var saveP        = p.saveP;
+  var saveMine     = p.saveMine;
   var setView      = p.setView;
   var settings     = p.settings;
   var results      = p.results;
@@ -74,14 +75,21 @@ function PredictView(p) {
       }
     });
 
+    var myRecord = existId
+      ? Object.assign({}, participants.find(function(x){ return x.id === pinId; }) || {},
+          { id: pinId, name: name, pin: pinCode.trim().toUpperCase(), preds: predsStamped })
+      : { id: pinId, name: name, pin: pinCode.trim().toUpperCase(), preds: predsStamped };
+
+    // Actualizar estado local (React) con la lista completa
     var upd = existId
       ? participants.map(function(x){
-          return x.id === pinId
-            ? Object.assign({}, x, { preds: predsStamped })
-            : x;
+          return x.id === pinId ? myRecord : x;
         })
-      : participants.concat([{ id: pinId, name: name, pin: pinCode.trim().toUpperCase(), preds: predsStamped }]);
-    await saveP(upd);
+      : participants.concat([myRecord]);
+
+    // Guardar SOLO mi nodo en Firebase (evita pisar predicciones de otros)
+    await saveMine(pinId, myRecord, upd);
+
     if (!existId) {
       await pins.markUsed(pinCode.trim().toUpperCase(), name);
       setExistId(pinId);
