@@ -54,7 +54,7 @@ var MATCHES = [
 
   // ── Cuartos de Final (Jul 9 – 11) ────────────────────────────────
   { id:"qf_01", num:42, phase:"Cuartos", homeRef:"W35", awayRef:"W34", kickoff:"2026-07-09T20:00:00Z" }, // jue 9 jul · 15:00 COL
-  { id:"qf_02", num:43, phase:"Cuartos", homeRef:"W38", awayRef:"W39", kickoff:"2026-07-11T19:00:00Z" }, // vie 10 jul · 14:00 COL
+  { id:"qf_02", num:43, phase:"Cuartos", homeRef:"W38", awayRef:"W39", kickoff:"2026-07-10T19:00:00Z" }, // vie 10 jul · 14:00 COL
   { id:"qf_03", num:44, phase:"Cuartos", homeRef:"W36", awayRef:"W37", kickoff:"2026-07-11T21:00:00Z" }, // sáb 11 jul · 16:00 COL
   { id:"qf_04", num:45, phase:"Cuartos", homeRef:"W40", awayRef:"W41", kickoff:"2026-07-12T01:00:00Z" }, // sáb 11 jul · 20:00 COL
 
