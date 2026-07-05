@@ -1,151 +1,135 @@
+// - Leaderboard / standings view -
 function LeaderboardView(p) {
-  var ctx = useApp();
-  var thm = ctx.thm || THEMES.noche;
+  var lctx=useLang();var t=lctx.t;var lang=lctx.lang;
+  var thm=lctx.thm||THEMES.dark;
   var participants = p.participants;
   var results      = p.results;
   var settings     = p.settings;
 
-  var started = hasStarted();
-  var expSt = useState(null); var exp = expSt[0], setExp = expSt[1];
-
-  var human = participants.filter(function(x){ return x && x.id !== "_bot"; });
-
+  var rC = useMemo(function(){ return cascadeKO(results.groups, results.ko||{}, results.fairplay); }, [results]);
   var ranked = useMemo(function(){
-    return human
-      .map(function(x){
-        return Object.assign({}, x, calcScore(x.preds || {}, results, settings.scoring));
-      })
-      .sort(function(a,b){
-        if (b.pts !== a.pts) return b.pts - a.pts;
-        return a.name.localeCompare(b.name);
-      });
-  }, [participants, results, settings]);
+    return participants
+      .map(function(x){ return Object.assign({}, x, calcScore(x.preds, results, settings.scoring)); })
+      .sort(function(a, b){ return cmpTb(a, b, rC); });
+  }, [participants, results, settings, rC]);
 
-  // Tabla no visible hasta que empiece el torneo
-  if (!started) return html`<div class="fade" style=${{
-    maxWidth:680,margin:"0 auto",padding:"80px 16px",textAlign:"center"
-  }}>
-    <div style=${{fontSize:52,marginBottom:16}}>⏳</div>
-    <h2 class="bb" style=${{fontSize:32,color:thm.accent,marginBottom:12}}>
-      TABLA PENDIENTE
-    </h2>
-    <p style=${{color:thm.inv(.4),fontSize:14,lineHeight:1.8}}>
-      ${T.hiddenMsg}<br/>
-      <span style=${{fontSize:12}}>
-        Primer partido: ${fmtKickoff(MATCHES.slice().sort(function(a,b){
-          return new Date(a.kickoff) - new Date(b.kickoff);
-        })[0].kickoff)}
-      </span>
-    </p>
-  </div>`;
+  var expState = useState(null);
+  var exp = expState[0], setExp = expState[1];
 
-  if (ranked.length === 0) return html`<div class="fade" style=${{
-    maxWidth:680,margin:"0 auto",padding:"60px 16px",textAlign:"center"
-  }}>
-    <p style=${{color:thm.inv(.3)}}>${T.noPart}</p>
-  </div>`;
+  var human = participants.filter(function(x){ return x.id !== "claude_bot"; });
+  var total = human.length * settings.entryFee;
 
-  return html`<div class="fade" style=${{maxWidth:680,margin:"0 auto",padding:"28px 16px 60px"}}>
+  // Prize ranks count humans only — the bot appears unranked and doesn't shift anyone's position
+  var rankOf = {};
+  (function(){ var n=0; ranked.forEach(function(px){ if(px.id!=="claude_bot"){ n++; rankOf[px.id]=n; } }); })();
 
-    <!-- Encabezado -->
-    <div style=${{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-      <span style=${{fontSize:36}}>🏅</span>
+  var koLabels = {
+    groups:     t.groupStage,
+    r32:        t.r32,
+    r16:        t.r16,
+    qf:         t.qf,
+    sf:         t.sf,
+    thirdMatch: t.thirdMatch,
+    final:      t.final,
+    champion:   t.champion,
+    thirdWin:   t.thirdWin
+  };
+
+  return html`<div className="fade" style=${{ maxWidth:780, margin:"0 auto", padding:"28px 16px 60px" }}>
+
+
+    <div style=${{ display:"flex", alignItems:"center", gap:12, marginBottom:22 }}>
+      <span style=${{ fontSize:36 }}>\ud83c\udfc5</span>
       <div>
-        <h2 class="bb" style=${{fontSize:30,color:thm.accent}}>${T.leaderTitle}</h2>
-        <p style=${{color:thm.inv(.4),fontSize:13}}>${ranked.length} participantes</p>
+        <h2 className="bb" style=${{ fontSize:30 }}>${t.table.replace("\ud83c\udfc5 ","")}</h2>
+        <p style=${{ color:thm.inv(.4), fontSize:13 }}>
+          ${human.length} ${t.participants} \u00b7 ${settings.currency} ${total}
+        </p>
       </div>
     </div>
 
-    <!-- Premios -->
-    <div style=${{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
-      ${[
-        {label:T.prize1, bg:thm.a(.12), color:thm.accent},
-        {label:T.prize2, bg:thm.inv(.06), color:thm.inv(.65)},
-        {label:T.prize3, bg:thm.inv(.04), color:thm.inv(.45)}
-      ].map(function(pr,i){
-        return html`<div key=${i} style=${{
-          flex:1, minWidth:130, padding:"9px 12px", borderRadius:10,
-          background:pr.bg, fontWeight:700, fontSize:12, color:pr.color,
-          textAlign:"center", lineHeight:1.4
-        }}>${pr.label}</div>`;
-      })}
-    </div>
 
-    <!-- Progreso de resultados -->
-    <div style=${{marginBottom:16,padding:"10px 14px",borderRadius:10,
-      background:thm.inv(.04),border:thm.bdr(1,.07)}}>
-      <div style=${{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-        <span style=${{fontSize:11,color:thm.inv(.4)}}>Resultados ingresados</span>
-        <span style=${{fontSize:11,color:thm.accent,fontWeight:700}}>${completedCount(results)} / ${MATCHES.length}</span>
-      </div>
-      <${PBar} v=${completedCount(results)} max=${MATCHES.length}/>
-    </div>
+    ${ranked.length === 0
+      ? html`<${Card} sx=${{ textAlign:"center", padding:"60px 20px", color:thm.inv(.3) }}>${t.noPart}</${Card}>`
+      : html`<${Card} sx=${{ padding:0, overflow:"hidden" }}>
 
-    <!-- Tabla -->
-    <${Card} sx=${{padding:0,overflow:"hidden"}}>
-      <!-- Cabecera -->
-      <div style=${{
-        display:"grid",gridTemplateColumns:"36px 1fr 60px",
-        padding:"8px 16px",borderBottom:thm.bdr(1,.08),
-        fontSize:10,color:thm.inv(.3),fontWeight:700,letterSpacing:".06em"
-      }}>
-        <span>#</span>
-        <span>NOMBRE</span>
-        <span style=${{textAlign:"right"}}>PTS</span>
-      </div>
 
-      <!-- Filas -->
-      ${ranked.map(function(r, i){
-        var isExp = exp === r.id;
-        var medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":null;
-
-        return html`<div key=${r.id}>
-          <!-- Fila principal -->
-          <div
-            onClick=${function(){ setExp(isExp ? null : r.id); }}
-            style=${{
-              display:"grid",gridTemplateColumns:"36px 1fr 60px",
-              padding:"12px 16px",cursor:"pointer",
-              borderBottom:thm.bdr(1,isExp?.1:.05),
-              background:isExp?thm.a(.07):i%2===0?"transparent":thm.inv(.02),
-              transition:"background .15s"
-            }}
-          >
-            <span style=${{
-              fontSize:i<3?18:13,
-              color:i<3?undefined:thm.inv(.35),
-              fontWeight:700,lineHeight:1.2
-            }}>${medal || (i+1)}</span>
-            <span style=${{
-              fontWeight:600,fontSize:14,
-              color:isExp?thm.accent:thm.inv(.85)
-            }}>${r.name}</span>
-            <span class="bb" style=${{
-              textAlign:"right",fontSize:22,
-              color:isExp?thm.accent:thm.inv(.9)
-            }}>${r.pts}</span>
+          <div class="lb-grid" style=${{ padding:"8px 18px",
+            borderBottom:thm.bdr(1,.08),
+            fontSize:11, color:thm.inv(.28), fontWeight:700 }}>
+            <span>#</span>
+            <span>Name</span>
+            <span style=${{ textAlign:"right" }}>PTS</span>
+            <span class="lb-col-hide" style=${{ textAlign:"right", fontSize:10 }}>\ud83e\udd47</span>
+            <span class="lb-col-hide" style=${{ textAlign:"right", fontSize:10 }}>Final</span>
+            <span class="lb-col-hide" style=${{ textAlign:"right", fontSize:10 }}>SF</span>
           </div>
 
-          <!-- Detalle expandido -->
-          ${isExp && html`<div style=${{
-            padding:"12px 16px 16px",
-            background:thm.a(.04),
-            borderBottom:thm.bdr(1,.08)
-          }}>
-            <div style=${{
-              fontSize:10,fontWeight:700,color:thm.inv(.3),
-              letterSpacing:".08em",marginBottom:10,textTransform:"uppercase"
-            }}>Mis predicciones</div>
-            ${MATCHES.map(function(m){
-              var pr  = r.preds && r.preds[m.id];
-              var res = results && results[m.id];
-              return html`<${MatchCard} key=${m.id}
-                match=${m} result=${res} results=${results} pred=${pr}/>`;
-            })}
-          </div>`}
-        </div>`;
-      })}
-    </${Card}>
 
+          ${ranked.map(function(px, i){
+            var isOpen = exp === px.id;
+            var rk = rankOf[px.id]; // undefined for the bot
+            var pxC=cascadeKO(px.preds&&px.preds.groups,px.preds&&px.preds.ko||{}); var ch=pxC.champion;
+            var chHit  = ch && rC.champion && ch === rC.champion;
+
+            return html`<div key=${px.id}>
+
+              <div onClick=${function(){ setExp(isOpen ? null : px.id); }} class="lb-grid" style=${{
+                padding:"13px 18px", borderBottom:thm.bdr(1,.05),
+                alignItems:"center", cursor:"pointer", transition:"background .13s",
+                background: isOpen ? thm.a(.07) : rk===1 ? thm.a(.05) : "transparent"
+              }}>
+                <span style=${{ textAlign:"center", fontWeight:800, fontSize:rk&&rk<=3?20:14,
+                  color: rk===1?thm.accent:rk===2?"#94a3b8":rk===3?"#b45309":thm.inv(.22) }}>
+                  ${!rk?"\ud83e\udd16":rk===1?"\ud83e\udd47":rk===2?"\ud83e\udd48":rk===3?"\ud83e\udd49":rk}
+                </span>
+                <div>
+                  <div style=${{ fontWeight:600, fontSize:14, display:"flex", alignItems:"center", gap:6 }}>
+                    ${px.name}
+                    ${px.id === "claude_bot" && html`<span style=${{ fontSize:10, background:thm.a(.2), color:thm.accent, borderRadius:4, padding:"1px 5px", fontWeight:700 }}>BOT</span>`}
+                  </div>
+                  <div style=${{ fontSize:11, color:thm.inv(.3), marginTop:1 }}>
+                    ${ch ? html`<${FlagImg} team=${ch}/> ${teamName(ch,lang)}${chHit?" \u2b50":""}` : " "}
+                  </div>
+                </div>
+                <div style=${{ textAlign:"right", fontWeight:800, fontSize:20, color:thm.accent }}>${px.pts}</div>
+                <div class="lb-col-hide" style=${{ textAlign:"right", fontSize:13, color: chHit ? "#4ade80" : thm.inv(.28) }}>
+                  ${px.detail && px.detail.champion && px.detail.champion.earned || 0}
+                </div>
+                <div class="lb-col-hide" style=${{ textAlign:"right", fontSize:13, color:thm.inv(.45) }}>
+                  ${px.detail && px.detail.final && px.detail.final.hits || 0}/${results.final && results.final.length || 2}
+                </div>
+                <div class="lb-col-hide" style=${{ textAlign:"right", fontSize:13, color:thm.inv(.45) }}>
+                  ${px.detail && px.detail.sf && px.detail.sf.hits || 0}/${results.sf && results.sf.length || 4}
+                </div>
+              </div>
+
+
+              ${isOpen && html`<div style=${{ padding:"12px 18px 16px", background:thm.inv(.02), borderBottom:thm.bdr(1,.06) }}>
+                <div style=${{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(155px,1fr))", gap:8 }}>
+                  ${["groups","r32","r16","qf","sf","thirdMatch","final","champion","thirdWin"].map(function(rid){
+                    var d = (px.detail && px.detail[rid]) || { hits:0, earned:0 };
+                    var mp = d.mpts || 0;
+                    var tot = (d.earned||0) + mp;
+                    var hasSplit = ["r32","r16","qf","sf","thirdMatch","final"].indexOf(rid) >= 0;
+                    return html`<div key=${rid} style=${{ background:thm.inv(.04), borderRadius:10, padding:"9px 12px" }}>
+                      <div style=${{ fontSize:11, color:thm.inv(.35), marginBottom:3 }}>${koLabels[rid] || rid}</div>
+                      <div style=${{ fontWeight:700, fontSize:15, color: tot>0 ? thm.accent : thm.inv(.28) }}>
+                        ${tot} pts
+                      </div>
+                      ${hasSplit && tot>0 && html`<div style=${{ fontSize:9.5, color:thm.inv(.38), marginTop:2 }}>
+                        ${lang==="es"?"progresi\u00f3n":"progression"} ${d.earned||0} \u00b7 ${lang==="es"?"marcadores":"scores"} ${mp}
+                      </div>`}
+                    </div>`;
+                  })}
+                </div>
+              </div>`}
+            </div>`;
+          })}
+        </${Card}>`
+    }
+
+
+    <p style=${{ marginTop:12, fontSize:11, color:thm.inv(.25), textAlign:"center" }}>${t.tiebreak}</p>
   </div>`;
 }

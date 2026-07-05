@@ -1,188 +1,381 @@
-// ── Resolución de bracket (equipos KO) ───────────────────────────────
-// Las referencias son "W18" (ganador #18) o "L46" (perdedor #46).
-// Devuelve el nombre del equipo si ya se conoce, o null si aún no.
+// ── Shared guard: a score object is complete only when BOTH sides are entered ──
+function hasScore(x) {
+  return !!x &&
+    x.h !== "" && x.h !== undefined && x.h !== null &&
+    x.a !== "" && x.a !== undefined && x.a !== null;
+}
 
-// Busca un partido por su número
-function matchByNum(num) {
-  for (var i = 0; i < MATCHES.length; i++) {
-    if (MATCHES[i].num === num) return MATCHES[i];
+// ── Build raw stats for a set of matches ────────────────────────────
+function buildStats(matches, gp) {
+  var s = {};
+  matches.forEach(function(m) {
+    s[m.home] = s[m.home] || { mp:0,w:0,d:0,l:0,gf:0,ga:0,gd:0,pts:0 };
+    s[m.away] = s[m.away] || { mp:0,w:0,d:0,l:0,gf:0,ga:0,gd:0,pts:0 };
+  });
+  matches.forEach(function(m) {
+    var p = gp && gp[m.id];
+    if (!hasScore(p)) return;
+    var h = +p.h, a = +p.a;
+    s[m.home].mp++; s[m.away].mp++;
+    s[m.home].gf += h; s[m.home].ga += a; s[m.home].gd += h - a;
+    s[m.away].gf += a; s[m.away].ga += h; s[m.away].gd += a - h;
+    if (h > a)      { s[m.home].pts += 3; s[m.home].w++; s[m.away].l++; }
+    else if (h < a) { s[m.away].pts += 3; s[m.away].w++; s[m.home].l++; }
+    else            { s[m.home].pts++;    s[m.away].pts++; s[m.home].d++; s[m.away].d++; }
+  });
+  return s;
+}
+
+// ── Calculate sorted group standings with FIFA tiebreaker ────────────
+function calcStandings(gp, group, fairplay) {
+  var teams = TBG[group].slice();
+  var ms    = GMS[group];
+  var s     = buildStats(ms, gp);
+  var fp    = (fairplay && fairplay[group]) || {};
+
+  function fpPts(team) {
+    // Single fair play score entered by admin (negative number, e.g. -3)
+    var f = fp[team];
+    return (typeof f === "number") ? f : (f && typeof f.score === "number" ? f.score : 0);
   }
-  return null;
-}
 
-// Ganador de un partido según resultado + override de penales
-function matchWinner(match, results) {
-  if (!match) return null;
-  var r = results && results[match.id];
-  if (!r || r.h === "" || r.h === undefined || r.a === "" || r.a === undefined) return null;
-  var home = resolveTeam(match, "home", results);
-  var away = resolveTeam(match, "away", results);
-  if (!home || !away) return null;
-  var rh = +r.h, ra = +r.a;
-  if (rh > ra) return home;
-  if (ra > rh) return away;
-  // Empate → ganó por penales (r.pen = "H" o "A")
-  if (r.pen === "H") return home;
-  if (r.pen === "A") return away;
-  return null; // empate sin definir penales
-}
-
-function matchLoser(match, results) {
-  if (!match) return null;
-  var r = results && results[match.id];
-  if (!r || r.h === "" || r.h === undefined || r.a === "" || r.a === undefined) return null;
-  var home = resolveTeam(match, "home", results);
-  var away = resolveTeam(match, "away", results);
-  if (!home || !away) return null;
-  var rh = +r.h, ra = +r.a;
-  if (rh > ra) return away;
-  if (ra > rh) return home;
-  if (r.pen === "H") return away;
-  if (r.pen === "A") return home;
-  return null;
-}
-
-// Resuelve una referencia "W18" / "L46" al nombre del equipo (o null)
-function resolveRef(ref, results) {
-  if (!ref) return null;
-  var type = ref.charAt(0);          // "W" o "L"
-  var num  = parseInt(ref.slice(1), 10);
-  var src  = matchByNum(num);
-  if (!src) return null;
-  return type === "W" ? matchWinner(src, results) : matchLoser(src, results);
-}
-
-// Resuelve el equipo de un partido para un lado ("home"/"away")
-// Si el partido tiene equipo fijo, lo devuelve. Si tiene ref, la resuelve.
-function resolveTeam(match, side, results) {
-  if (!match) return null;
-  var fixed = match[side];                 // home / away
-  if (fixed) return fixed;
-  var ref = match[side + "Ref"];           // homeRef / awayRef
-  return resolveRef(ref, results);
-}
-
-// Texto a mostrar cuando un equipo aún no se conoce ("Ganador #18")
-function refLabel(ref) {
-  if (!ref) return "Por definir";
-  var type = ref.charAt(0);
-  var num  = ref.slice(1);
-  return (type === "W" ? "Ganador #" : "Perdedor #") + num;
-}
-
-// Devuelve el equipo o el placeholder para mostrar
-function displayTeam(match, side, results) {
-  var team = resolveTeam(match, side, results);
-  if (team) return { team: team, isPlaceholder: false };
-  var ref = match[side + "Ref"];
-  return { team: refLabel(ref), isPlaceholder: true };
-}
-
-// ¿Están ambos equipos de un partido KO confirmados?
-function teamsKnown(match, results) {
-  return !!resolveTeam(match, "home", results) && !!resolveTeam(match, "away", results);
-}
-
-// ── ¿Está abierto un partido para predicciones? ──────────────────────
-// Un partido se cierra cuando el kickoff ha pasado (hora actual >= kickoff).
-// Los partidos con referencias (KO) solo se abren cuando ambos equipos
-// están confirmados. Se necesita pasar results para esa verificación.
-function isOpen(match, results) {
-  if (new Date() >= new Date(match.kickoff)) return false;
-  // Si el partido depende de ganadores aún no definidos, no está abierto
-  if ((match.homeRef || match.awayRef) && results !== undefined) {
-    if (!teamsKnown(match, results)) return false;
+  function cmp(a, b, subset) {
+    var h2h = ms.filter(function(m) {
+      return (m.home === a || m.home === b)
+          && (m.away === a || m.away === b)
+          && subset.indexOf(m.home) >= 0
+          && subset.indexOf(m.away) >= 0;
+    });
+    var h = buildStats(h2h, gp);
+    if (h[a] && h[b]) {
+      if (h[b].pts !== h[a].pts) return h[b].pts - h[a].pts;
+      if (h[b].gd  !== h[a].gd)  return h[b].gd  - h[a].gd;
+      if (h[b].gf  !== h[a].gf)  return h[b].gf  - h[a].gf;
+    }
+    if (s[b].gd !== s[a].gd) return s[b].gd - s[a].gd;
+    if (s[b].gf !== s[a].gf) return s[b].gf - s[a].gf;
+    // FIFA fair play tiebreaker
+    if (fpPts(b) !== fpPts(a)) return fpPts(b) - fpPts(a);
+    return a.localeCompare(b);
   }
-  return true;
+
+  return teams.sort(function(a, b) {
+    if (s[b].pts !== s[a].pts) return s[b].pts - s[a].pts;
+    var tied = teams.filter(function(t) { return s[t].pts === s[a].pts; });
+    if (tied.length > 1) return cmp(a, b, tied);
+    return 0;
+  }).map(function(t, i) {
+    return Object.assign({ team: t, pos: i + 1 }, s[t]);
+  });
 }
 
-// ── ¿Ha empezado el torneo? (al menos un kickoff ha pasado) ──────────
-function hasStarted() {
-  return MATCHES.some(function(m) { return !isOpen(m); });
+// ── Check if all 6 matches in a group are filled ─────────────────────
+function groupDone(gp, g) {
+  return GMS[g].every(function(m) {
+    var p = gp && gp[m.id];
+    return p && p.h !== '' && p.h !== undefined && p.a !== '' && p.a !== undefined;
+  });
 }
 
-// ── ¿Tiene resultado ingresado? ───────────────────────────────────────
-function hasResult(res, matchId) {
-  var r = res && res[matchId];
-  return r && r.h !== "" && r.h !== undefined && r.a !== "" && r.a !== undefined;
+// ── Determine the 32 qualifiers from group predictions ───────────────
+function getR32(gp, fairplay) {
+  function fpOf(g, team) {
+    // Conduct (fair-play) score for a team, mirroring calcStandings' fpPts.
+    var fp = (fairplay && fairplay[g]) || {};
+    var f = fp[team];
+    return (typeof f === "number") ? f : (f && typeof f.score === "number" ? f.score : 0);
+  }
+  var top2 = [], thirds = [], done = 0;
+  GROUPS.forEach(function(g) {
+    var st = calcStandings(gp, g, fairplay);
+    if (groupDone(gp, g)) done++;
+    top2.push(st[0].team, st[1].team);
+    thirds.push(Object.assign({ group: g, fp: fpOf(g, st[2].team) }, st[2]));
+  });
+  // FIFA ranking of third-placed teams: points, goal difference, goals scored,
+  // team conduct score, then (real FIFA) FIFA world ranking — which we approximate
+  // with team name as a last resort since rankings aren't available client-side.
+  thirds.sort(function(a, b) {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    if (b.gd  !== a.gd)  return b.gd  - a.gd;
+    if (b.gf  !== a.gf)  return b.gf  - a.gf;
+    if (b.fp  !== a.fp)  return b.fp  - a.fp; // higher (less negative) ranks first
+    return a.team.localeCompare(b.team);
+  });
+  var best8 = thirds.slice(0, 8);
+  return {
+    teams:      top2.concat(best8.map(function(x) { return x.team; })),
+    best8:      best8,
+    complete:   done === 12,
+    groupsDone: done
+  };
 }
 
-// ── Determina el resultado: "H" ganó local, "A" ganó visitante, "D" empate ──
-function outcome(h, a) {
-  h = +h; a = +a;
-  return h > a ? "H" : h < a ? "A" : "D";
+// ── Assign qualifying thirds to FIFA best-3rd slots (Annex C) ─────────
+// IMPORTANT: this is NOT a free constraint-satisfaction problem. For almost every
+// one of the 495 possible sets of qualifying third-place groups there are MANY
+// matchings that satisfy the slot constraints, but FIFA's Annex C fixes exactly
+// ONE official matching per set. So we look the set up in BEST3_TABLE (built from
+// Annex C). The old backtracking picked an arbitrary valid matching and therefore
+// disagreed with the official allocation in 484 of 495 cases.
+// Slot order matches BEST3_TABLE's value strings: opponents of winners 1A,1B,1D,1E,1G,1I,1K,1L.
+var BEST3_SLOT_ORDER = ["WA","WB","WD","WE","WG","WI","WK","WL"];
+
+function assignBest3(best8) {
+  var qualGroups = best8.map(function(x) { return x.group; });
+
+  // Primary: official Annex C lookup, keyed by the sorted set of the 8 groups.
+  if (typeof BEST3_TABLE !== "undefined" && qualGroups.length === 8) {
+    var key = qualGroups.slice().sort().join('');
+    var val = BEST3_TABLE[key];
+    if (val && val.length === 8) {
+      var out = {};
+      BEST3_SLOT_ORDER.forEach(function(slot, i) { out[slot] = val.charAt(i); });
+      return out; // { WA:"H", WB:"G", WD:"B", ... } — group letter per slot
+    }
+  }
+
+  // Fallback (group stage not yet complete, or an unexpected set): return *a* valid
+  // matching via backtracking. Not guaranteed to match Annex C, but never crashes.
+  return assignBest3Fallback(qualGroups);
 }
 
-// ── Puntaje de un partido individual ──────────────────────────────────
-// Retorna { pts, status } donde status es "exact" | "result" | "wrong" | null
+function assignBest3Fallback(qualGroups) {
+  var slotOptions = {};
+  Object.keys(BEST3_SLOTS).forEach(function(slot) {
+    slotOptions[slot] = BEST3_SLOTS[slot].validGroups.split('').filter(function(g) {
+      return qualGroups.indexOf(g) >= 0;
+    });
+  });
+  var slots = Object.keys(slotOptions).sort(function(a, b) {
+    return slotOptions[a].length - slotOptions[b].length; // most-constrained first
+  });
+  var assignment = {}, used = {};
+  function solve(idx) {
+    if (idx >= slots.length) return true;
+    var slot = slots[idx];
+    for (var i = 0; i < slotOptions[slot].length; i++) {
+      var g = slotOptions[slot][i];
+      if (!used[g]) {
+        assignment[slot] = g; used[g] = true;
+        if (solve(idx + 1)) return true;
+        delete assignment[slot]; delete used[g];
+      }
+    }
+    return false;
+  }
+  solve(0);
+  return assignment;
+}
+
+// ── Get winner of a KO match score ───────────────────────────────────
+// Returns "home", "away", or null (unresolved / not entered)
+function koWinner(score) {
+  if (!hasScore(score)) return null;
+  var h = +score.h, a = +score.a;
+  if (h > a) return 'home';
+  if (a > h) return 'away';
+  return score.winner || null; // draw: needs explicit winner (ET/pens)
+}
+
+// ── Cascade all KO results from group predictions + KO scores ─────────
+function cascadeKO(groupPreds, koScores, fairplay) {
+  groupPreds = groupPreds || {};
+  koScores   = koScores   || {};
+
+  var standings = {};
+  GROUPS.forEach(function(g) { standings[g] = calcStandings(groupPreds, g, fairplay); });
+
+  var r32info = getR32(groupPreds, fairplay);
+  var b3 = assignBest3(r32info.best8);
+
+  function resolveSlot(slot) {
+    if (!slot) return null;
+    if (slot.pos === 1) {
+      var st1 = standings[slot.g];
+      return st1 && st1[0] ? st1[0].team : null;
+    }
+    if (slot.pos === 2) {
+      var st2 = standings[slot.g];
+      return st2 && st2[1] ? st2[1].team : null;
+    }
+    if (slot.pos === 3) {
+      var grp = b3[slot.slot];
+      if (!grp) return null;
+      var st3 = standings[grp];
+      return st3 && st3[2] ? st3[2].team : null;
+    }
+    return null;
+  }
+
+  function mkResult(id, homeTeam, awayTeam) {
+    var sc = koScores[id];
+    var w  = koWinner(sc);
+    return {
+      id: id, home: homeTeam || null, away: awayTeam || null, score: sc || null,
+      winner: w === 'home' ? homeTeam : w === 'away' ? awayTeam : null,
+      loser:  w === 'home' ? awayTeam : w === 'away' ? homeTeam : null,
+    };
+  }
+
+  var r32 = {};
+  R32_FIXTURES.forEach(function(f) {
+    r32[f.id] = mkResult(f.id, resolveSlot(f.home), resolveSlot(f.away));
+  });
+
+  var r16 = {};
+  KO_BRACKET.r16.forEach(function(f) {
+    r16[f.id] = mkResult(f.id, r32[f.home]&&r32[f.home].winner, r32[f.away]&&r32[f.away].winner);
+  });
+
+  var qf = {};
+  KO_BRACKET.qf.forEach(function(f) {
+    qf[f.id] = mkResult(f.id, r16[f.home]&&r16[f.home].winner, r16[f.away]&&r16[f.away].winner);
+  });
+
+  var sf = {};
+  KO_BRACKET.sf.forEach(function(f) {
+    sf[f.id] = mkResult(f.id, qf[f.home]&&qf[f.home].winner, qf[f.away]&&qf[f.away].winner);
+  });
+
+  var finalR = mkResult('final', sf['sf_0']&&sf['sf_0'].winner, sf['sf_1']&&sf['sf_1'].winner);
+  var s3rdR  = mkResult('s3rd',  sf['sf_0']&&sf['sf_0'].loser,  sf['sf_1']&&sf['sf_1'].loser);
+
+  function winners(map, ids) {
+    return ids.map(function(id){ return map[id]&&map[id].winner; }).filter(Boolean);
+  }
+  // r32qualifiers = all 32 teams that qualified from group stage (both sides of every R32 match)
+  var r32qualifiers = R32_FIXTURES.reduce(function(acc, f){
+    var m = r32[f.id];
+    if(m&&m.home) acc.push(m.home);
+    if(m&&m.away) acc.push(m.away);
+    return acc;
+  }, []);
+  var r32teams   = winners(r32, R32_FIXTURES.map(function(f){return f.id;}));
+  var r16teams   = winners(r16, KO_BRACKET.r16.map(function(f){return f.id;}));
+  var qfteams    = winners(qf,  KO_BRACKET.qf.map(function(f){return f.id;}));
+  var sfteams    = winners(sf,  KO_BRACKET.sf.map(function(f){return f.id;}));
+  var finalTeams = [finalR.winner, finalR.loser].filter(Boolean);
+  // 3rd place match is contested by the two SF losers (s3rd.home and s3rd.away)
+  var thirdTeams = [s3rdR.home, s3rdR.away].filter(Boolean);
+
+  return {
+    r32:r32, r16:r16, qf:qf, sf:sf, final:finalR, s3rd:s3rdR,
+    r32qualifiers:r32qualifiers,
+    r32teams:r32teams, r16teams:r16teams, qfteams:qfteams, sfteams:sfteams,
+    finalTeams:finalTeams, thirdTeams:thirdTeams,
+    champion:finalR.winner, thirdWin:s3rdR.winner,
+    r32fixtures: r32,
+  };
+}
+
+// ── Group stage match scoring ─────────────────────────────────────────
+function oc(h, a) { return h > a ? "H" : h < a ? "A" : "D"; }
+
 function scoreMatch(pred, res, sc) {
-  if (!pred || pred.h === "" || pred.h === undefined) return { pts: 0, status: null };
-  if (!res  || res.h  === "" || res.h  === undefined) return { pts: 0, status: null };
-  var ph = +pred.h, pa = +pred.a;
-  var rh = +res.h,  ra = +res.a;
-  var pts = 0;
-  var resultOk = outcome(ph, pa) === outcome(rh, ra);
-  var exactOk  = ph === rh && pa === ra;
-  if (resultOk) pts += (sc && sc.result) || DEF.scoring.result;
-  if (exactOk)  pts += (sc && sc.exact)  || DEF.scoring.exact;
-  var status = exactOk ? "exact" : resultOk ? "result" : "wrong";
-  return { pts: pts, status: status };
+  if (!hasScore(pred) || !hasScore(res)) return 0;
+  // Per-key fallback to DEF.scoring so older saved settings missing a key keep default values
+  function v(k){ var x = sc && sc[k]; return (x===undefined||x===null||x==="") ? (DEF.scoring[k]||0) : +x; }
+  var ph = +pred.h, pa = +pred.a, rh = +res.h, ra = +res.a;
+  var po = oc(ph, pa), ro = oc(rh, ra), p = 0;
+  if (po === ro)                            p += v("groupResult");
+  if (ph === rh)                            p += v("groupGoalA");
+  if (pa === ra)                            p += v("groupGoalB");
+  if (po === ro && (ph-pa) === (rh-ra))     p += v("groupDiff");
+  return p;
 }
 
-// ── Puntaje total de un participante ─────────────────────────────────
+function mSt(pred, res, sc) {
+  if (!hasScore(pred) || !hasScore(res)) return null;
+  var p = scoreMatch(pred, res, sc);
+  return p >= 6 ? "exact" : p >= 3 ? "result" : p > 0 ? "partial" : "wrong";
+}
+
+// ── Total score + breakdown ───────────────────────────────────────────
 function calcScore(preds, results, sc) {
-  var total = 0;
-  var detail = {};
-  MATCHES.forEach(function(m) {
-    var p = preds && preds[m.id];
-    var r = results && results[m.id];
-    var s = scoreMatch(p, r, sc);
-    detail[m.id] = s;
-    total += s.pts;
+  if (!preds || !results) return { pts: 0, detail: {} };
+  var pts = 0, detail = {};
+
+  // Group stage
+  var gPts = 0;
+  ALL_MATCHES.forEach(function(m) {
+    gPts += scoreMatch(preds.groups&&preds.groups[m.id], results.groups&&results.groups[m.id], sc);
   });
-  return { pts: total, detail: detail };
+  detail.groups = { earned: gPts }; pts += gPts;
+
+  // KO stage — only score when results exist
+  var hasResults = Object.keys(results.groups||{}).some(function(k){
+    var m=results.groups[k]; return m&&m.h!==''&&m.h!==undefined;
+  }) || Object.keys(results.ko||{}).length > 0;
+
+  if (hasResults) {
+    var pC = cascadeKO(preds.groups,   preds.ko   || {});
+    var rC = cascadeKO(results.groups, results.ko || {}, results.fairplay);
+
+    function koHits(pT, rT, ppg) {
+      var hits = pT.filter(function(t){return rT.indexOf(t)>=0;}).length;
+      return { hits:hits, earned:hits*(ppg||0) };
+    }
+    // R32 qualification points only once ALL group results are complete — partial group
+    // results produce projected (often wrong) qualifiers and would award phantom points.
+    var groupsComplete = GROUPS.every(function(g){ return groupDone(results.groups||{}, g); });
+    detail.r32        = groupsComplete
+                        ? koHits(pC.r32qualifiers, rC.r32qualifiers, sc.r32     ||0)
+                        : { hits:0, earned:0 };
+    detail.r16        = koHits(pC.r32teams,      rC.r32teams,      sc.r16       ||0);
+    detail.qf         = koHits(pC.r16teams,      rC.r16teams,      sc.qf        ||0);
+    detail.sf         = koHits(pC.qfteams,       rC.qfteams,       sc.sf        ||0);
+    detail.thirdMatch = koHits(pC.thirdTeams, rC.thirdTeams, sc.thirdMatch||0);
+    detail.final      = koHits(pC.finalTeams, rC.finalTeams, sc.final     ||0);
+    var chHit = pC.champion && rC.champion && pC.champion===rC.champion;
+    detail.champion   = { hits:chHit?1:0, earned:chHit?(sc.champion||0):0 };
+    var twHit = pC.thirdWin && rC.thirdWin && pC.thirdWin===rC.thirdWin;
+    detail.thirdWin   = { hits:twHit?1:0, earned:twHit?(sc.thirdWin||0):0 };
+    ['r32','r16','qf','sf','thirdMatch','final','champion','thirdWin'].forEach(function(k){ pts+=detail[k].earned; });
+
+    // Per-match scoring for KO matches (result + goals + GD, same as group stage, up to 7 per match).
+    // Attributed per round (detail[rd].mpts) so views can split "progression" vs "match scores" per stage.
+    var koRoundIds = {
+      r32:        R32_FIXTURES.map(function(f){return f.id;}),
+      r16:        KO_BRACKET.r16.map(function(f){return f.id;}),
+      qf:         KO_BRACKET.qf.map(function(f){return f.id;}),
+      sf:         KO_BRACKET.sf.map(function(f){return f.id;}),
+      thirdMatch: [KO_BRACKET.s3rd.id],
+      final:      [KO_BRACKET.final.id]
+    };
+    var koMatchPts = 0;
+    Object.keys(koRoundIds).forEach(function(rd){
+      var mp = 0;
+      koRoundIds[rd].forEach(function(id){
+        mp += scoreMatch(preds.ko&&preds.ko[id], results.ko&&results.ko[id], sc);
+      });
+      detail[rd].mpts = mp;
+      koMatchPts += mp;
+    });
+    detail.champion.mpts = 0; detail.thirdWin.mpts = 0;
+    detail.koMatches = { earned: koMatchPts };
+    pts += koMatchPts;
+  } else {
+    ['r32','r16','qf','sf','thirdMatch','final','champion','thirdWin'].forEach(function(k){ detail[k]={hits:0,earned:0,mpts:0}; });
+  }
+  return { pts:pts, detail:detail };
 }
 
-// ── Formato de fecha legible en español ──────────────────────────────
-function fmtKickoff(isoStr) {
-  var d = new Date(isoStr);
-  // Convertir a hora Colombia (UTC-5)
-  var co = new Date(d.getTime() - 5 * 60 * 60 * 1000);
-  var months = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
-  var days   = ["dom","lun","mar","mié","jue","vie","sáb"];
-  var day    = days[co.getUTCDay()];
-  var date   = co.getUTCDate();
-  var month  = months[co.getUTCMonth()];
-  var h      = co.getUTCHours().toString().padStart(2,"0");
-  var min    = co.getUTCMinutes().toString().padStart(2,"0");
-  return day + " " + date + " " + month + " · " + h + ":" + min + " COL";
-}
-
-// ── Cuenta regresiva legible ──────────────────────────────────────────
-function countdown(isoStr) {
-  var ms = new Date(isoStr) - new Date();
-  if (ms <= 0) return null;
-  var h  = Math.floor(ms / 3600000);
-  var d  = Math.floor(h / 24);
-  h = h % 24;
-  var m  = Math.floor((ms % 3600000) / 60000);
-  if (d > 1)  return "Cierra en " + d + " días";
-  if (d === 1) return "Cierra mañana";
-  if (h > 0)  return "Cierra en " + h + "h " + m + "m";
-  return "Cierra en " + m + " min";
-}
-
-// ── Partidos por fase ─────────────────────────────────────────────────
-function matchesByPhase() {
-  var phases = {};
-  MATCHES.forEach(function(m) {
-    if (!phases[m.phase]) phases[m.phase] = [];
-    phases[m.phase].push(m);
-  });
-  return phases;
-}
-
-// ── Partidos completados (tienen resultado) ───────────────────────────
-function completedCount(results) {
-  return MATCHES.filter(function(m) { return hasResult(results, m.id); }).length;
+// ── Leaderboard tiebreak comparison ──────────────────────────────────
+function cmpTb(a, b, rC) {
+  // rC = pre-computed cascadeKO(results)
+  function tb(p) {
+    var pC   = cascadeKO(p.preds&&p.preds.groups, p.preds&&p.preds.ko);
+    var ch   = (pC.champion && rC.champion && pC.champion===rC.champion) ? 1 : 0;
+    var ru   = rC.finalTeams ? rC.finalTeams.find(function(t){return t!==rC.champion;})||'' : '';
+    var pRu  = pC.finalTeams ? pC.finalTeams.find(function(t){return t!==pC.champion;})||'' : '';
+    var s3   = (pC.thirdWin && rC.thirdWin && pC.thirdWin===rC.thirdWin) ? 1 : 0;
+    var fPts = ((p.detail&&p.detail.final&&p.detail.final.earned)||0)
+             + ((p.detail&&p.detail.thirdMatch&&p.detail.thirdMatch.earned)||0);
+    var sPts = (p.detail&&p.detail.sf&&p.detail.sf.earned)||0;
+    return [p.pts, ch, pRu===ru?1:0, s3, fPts, sPts];
+  }
+  var ta=tb(a), tb2=tb(b);
+  for (var i=0;i<ta.length;i++) if(ta[i]!==tb2[i]) return tb2[i]-ta[i];
+  return 0;
 }
