@@ -16,7 +16,7 @@ function HomeView(p) {
       .map(function(x){
         return Object.assign({}, x, calcScore(x.preds || {}, results, settings.scoring));
       })
-      .sort(function(a,b){ return b.pts - a.pts; });
+      .sort(cmpRank);
   }, [participants, results, settings]);
 
   var completed = completedCount(results);

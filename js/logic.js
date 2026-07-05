@@ -133,9 +133,9 @@ function scoreMatch(pred, res, sc) {
 function calcScore(preds, results, sc) {
   var total = 0;
   var detail = {};
-  var exacts = 0;   // marcadores exactos (desempate 1)
-  var correct = 0;  // resultados correctos (desempate 2)
-  var predicted = 0; // partidos con predicción registrada (desempate 3)
+  var exacts = 0;    // marcadores exactos (desempate 1)
+  var correct = 0;   // resultados correctos (desempate 2)
+  var predicted = 0; // partidos predichos (desempate 3)
   MATCHES.forEach(function(m) {
     var p = preds && preds[m.id];
     var r = results && results[m.id];
