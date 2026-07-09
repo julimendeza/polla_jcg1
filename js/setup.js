@@ -142,8 +142,50 @@ function FlagImg(p) {
 // Cada PIN es un objeto: { pin, name, used, usedAt }
 // El nombre viene del registro del PIN creado por el admin.
 var pins = {
-  get: async function() { return await db.get("jcg_pins") || []; },
-  set: async function(list) { await db.set("jcg_pins", list); },
+  get: async function() {
+    var data = await db.get("jcg_pins");
+    if (!data) return [];
+    // Firebase devuelve objeto (no array) si se borraron entradas: convertir.
+    var list = Array.isArray(data) ? data : Object.values(data);
+    return list.filter(function(p){ return p && p.pin; });
+  },
+
+  set: async function(list) {
+    // GUARDA DE SEGURIDAD: nunca sobrescribir la lista completa con una vacía
+    // por error. Si la lista nueva está vacía pero en Firebase hay PINs,
+    // se aborta para evitar borrados accidentales masivos.
+    if (!Array.isArray(list) || list.length === 0) {
+      var existing = await pins.get();
+      if (existing.length > 0) {
+        console.error("pins.set abortado: intento de guardar lista vacía sobre " + existing.length + " PINs existentes");
+        return false;
+      }
+    }
+    await db.set("jcg_pins", list);
+    return true;
+  },
+
+  // Marca un PIN como usado escribiendo SOLO ese nodo (evita pisar la lista).
+  markUsed: async function(code, name) {
+    var list = await pins.get();
+    var target = code.trim().toUpperCase();
+    var idx = -1;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].pin.trim().toUpperCase() === target) { idx = i; break; }
+    }
+    if (idx < 0) return; // PIN no encontrado, no hacer nada
+    var updated = Object.assign({}, list[idx], {
+      used: true,
+      usedAt: new Date().toISOString()
+    });
+    // Escribir SOLO el nodo de ese PIN, no toda la lista (evita race + borrados)
+    if (db._url) {
+      await db.setChild("jcg_pins", String(idx), updated);
+    } else {
+      list[idx] = updated;
+      await db.set("jcg_pins", list);
+    }
+  },
 
   // Valida un PIN y retorna { ok, pin } donde pin.name es el nombre del usuario
   validate: async function(code) {
@@ -152,21 +194,6 @@ var pins = {
       return p.pin.trim().toUpperCase() === code.trim().toUpperCase();
     });
     if (!found) return { ok: false, err: T.pinInvalid };
-    // Siempre se permite pasar — los usuarios pueden volver a editar
     return { ok: true, pin: found };
-  },
-
-  markUsed: async function(code, name) {
-    var list = await pins.get();
-    var updated = list.map(function(p) {
-      if (p.pin.trim().toUpperCase() === code.trim().toUpperCase()) {
-        return Object.assign({}, p, {
-          used: true,
-          usedAt: new Date().toISOString()
-        });
-      }
-      return p;
-    });
-    await pins.set(updated);
   }
 };

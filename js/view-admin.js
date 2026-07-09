@@ -89,6 +89,7 @@ function AdminView(p) {
   }
 
   async function handleDeletePin(pin) {
+    if (!window.confirm("¿Eliminar el PIN " + pin + "? Esta acción no se puede deshacer.")) return;
     var list = await pins.get();
     var updated = list.filter(function(p){ return p.pin !== pin; });
     await pins.set(updated);
